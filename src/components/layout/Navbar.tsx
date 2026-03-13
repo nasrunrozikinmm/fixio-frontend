@@ -305,14 +305,14 @@ export default function Navbar() {
 
   // ---- Mobile Drawer Content ----
   const drawerContent = (
-    <Box sx={{ width: 280, pt: 2 }}>
+    <Box sx={{ width: 300, pt: 2 }}>
       {/* Header */}
       <Box
         sx={{
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          px: 2,
+          px: 2.5,
           mb: 2,
         }}
       >
@@ -332,8 +332,10 @@ export default function Navbar() {
         <IconButton
           onClick={() => setDrawerOpen(false)}
           aria-label="Tutup menu"
+          size="small"
+          sx={{ bgcolor: 'action.hover', borderRadius: 2 }}
         >
-          <CloseIcon />
+          <CloseIcon sx={{ fontSize: 20 }} />
         </IconButton>
       </Box>
 
@@ -348,9 +350,11 @@ export default function Navbar() {
             display: "flex",
             alignItems: "center",
             bgcolor: "background.default",
+            border: '1px solid',
+            borderColor: 'divider',
             borderRadius: 20,
             px: 1.5,
-            py: 0.5,
+            py: 0.375,
           }}
         >
           <SearchIcon sx={{ color: "text.secondary", fontSize: 20, mr: 1 }} />
@@ -380,6 +384,11 @@ export default function Navbar() {
           bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "divider",
+          backdropFilter: 'blur(8px)',
+          backgroundColor: (t) =>
+            t.palette.mode === 'dark'
+              ? 'rgba(39,39,41,0.92)'
+              : 'rgba(255,255,255,0.92)',
         }}
       >
         <Toolbar
@@ -413,7 +422,7 @@ export default function Navbar() {
             />
           </Box>
 
-          {/* Search bar — Quora prominent center */}
+          {/* Search bar */}
           <Box
             component="form"
             onSubmit={handleSearch}
@@ -421,15 +430,18 @@ export default function Navbar() {
               display: { xs: "none", sm: "flex" },
               alignItems: "center",
               flex: 1,
-              maxWidth: 540,
+              maxWidth: 480,
               bgcolor: "background.default",
+              border: '1px solid',
+              borderColor: 'divider',
               borderRadius: 20,
               px: 2,
-              py: 0.5,
+              py: 0.375,
               mx: { sm: 1, md: 2 },
-              transition: "box-shadow 0.15s ease",
+              transition: 'all 0.2s ease',
               "&:focus-within": {
-                boxShadow: (t) => `0 0 0 2px ${t.palette.primary.main}`,
+                borderColor: 'primary.main',
+                boxShadow: (t) => `0 0 0 3px ${t.palette.primary.main}20`,
                 bgcolor: "background.paper",
               },
             }}
@@ -454,24 +466,25 @@ export default function Navbar() {
           >
             {/* Nav icon buttons */}
             {NAV_ICONS.map(({ label, path, icon, activeIcon }) => {
-              const isActive = pathname === path;
+              const active = pathname === path;
               return (
                 <IconButton
                   key={path}
                   onClick={() => handleNavigate(path)}
                   aria-label={label}
                   sx={{
-                    color: isActive ? "primary.main" : "text.secondary",
-                    borderBottom: isActive
-                      ? "2px solid"
-                      : "2px solid transparent",
-                    borderColor: isActive ? "primary.main" : "transparent",
-                    borderRadius: 0,
-                    px: 2,
-                    py: 1,
+                    bgcolor: active ? 'primary.main' : 'transparent',
+                    color: active ? 'primary.contrastText' : 'text.secondary',
+                    borderRadius: 2,
+                    width: 36,
+                    height: 36,
+                    '&:hover': {
+                      bgcolor: active ? 'primary.dark' : 'action.hover',
+                    },
+                    transition: 'all 0.15s ease',
                   }}
                 >
-                  {isActive ? activeIcon : icon}
+                  {active ? activeIcon : icon}
                 </IconButton>
               );
             })}
@@ -482,21 +495,15 @@ export default function Navbar() {
             {/* Notification bell */}
             <IconButton
               sx={{
-                color:
-                  pathname === "/notifications"
-                    ? "primary.main"
-                    : "text.secondary",
-                borderBottom:
-                  pathname === "/notifications"
-                    ? "2px solid"
-                    : "2px solid transparent",
-                borderColor:
-                  pathname === "/notifications"
-                    ? "primary.main"
-                    : "transparent",
-                borderRadius: 0,
-                px: 2,
-                py: 1,
+                color: pathname === "/notifications" ? 'primary.contrastText' : 'text.secondary',
+                bgcolor: pathname === "/notifications" ? 'primary.main' : 'transparent',
+                borderRadius: 2,
+                width: 36,
+                height: 36,
+                '&:hover': {
+                  bgcolor: pathname === "/notifications" ? 'primary.dark' : 'action.hover',
+                },
+                transition: 'all 0.15s ease',
               }}
               aria-label="Notifikasi"
               onClick={() => router.push("/notifications")}
@@ -509,13 +516,13 @@ export default function Navbar() {
                   "& .MuiBadge-badge": {
                     top: 2,
                     right: 2,
-                    fontSize: "0.625rem",
+                    fontSize: "0.6rem",
                     height: 16,
                     minWidth: 16,
                   },
                 }}
               >
-                <NotificationsNoneIcon />
+                <NotificationsNoneIcon sx={{ fontSize: 22 }} />
               </Badge>
             </IconButton>
 
