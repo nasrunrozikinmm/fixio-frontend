@@ -175,7 +175,7 @@ export interface BookmarkListResponse {
 // ============================================================
 // Notification
 // ============================================================
-export type NotificationType = 'new_follower' | 'post_vote' | 'post_comment';
+export type NotificationType = 'new_follower' | 'post_vote' | 'post_comment' | 'comment_vote';
 
 export interface Notification {
   id: string;

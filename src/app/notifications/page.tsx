@@ -28,6 +28,7 @@ const NOTIF_ICON: Record<string, React.ReactNode> = {
   new_follower: <PersonAddOutlinedIcon sx={{ fontSize: 20, color: 'success.main' }} />,
   post_vote: <ThumbUpAltOutlinedIcon sx={{ fontSize: 20, color: 'primary.main' }} />,
   post_comment: <ChatBubbleOutlineIcon sx={{ fontSize: 20, color: 'info.main' }} />,
+  comment_vote: <ThumbUpAltOutlinedIcon sx={{ fontSize: 20, color: 'secondary.main' }} />,
 };
 
 function NotificationItem({ notif, onMarkRead }: { notif: Notification; onMarkRead: (id: string) => void }) {

@@ -321,19 +321,26 @@ export default function Navbar() {
           onClick={() => handleNavigate("/")}
         >
           <Image
-            src="/high-color-logo.png"
+            src="/high-transparent-logo.png"
             alt="Fixio"
             width={80}
             height={28}
-            style={{ objectFit: 'contain' }}
+            style={{ objectFit: "contain" }}
             priority
           />
+            <Typography
+              variant="subtitle1"
+              sx={{ fontWeight: 700, lineHeight: 1.2 }}
+            >
+              Fixio
+            </Typography>
+            
         </Box>
         <IconButton
           onClick={() => setDrawerOpen(false)}
           aria-label="Tutup menu"
           size="small"
-          sx={{ bgcolor: 'action.hover', borderRadius: 2 }}
+          sx={{ bgcolor: "action.hover", borderRadius: 2 }}
         >
           <CloseIcon sx={{ fontSize: 20 }} />
         </IconButton>
@@ -350,8 +357,8 @@ export default function Navbar() {
             display: "flex",
             alignItems: "center",
             bgcolor: "background.default",
-            border: '1px solid',
-            borderColor: 'divider',
+            border: "1px solid",
+            borderColor: "divider",
             borderRadius: 20,
             px: 1.5,
             py: 0.375,
@@ -384,11 +391,11 @@ export default function Navbar() {
           bgcolor: "background.paper",
           borderBottom: "1px solid",
           borderColor: "divider",
-          backdropFilter: 'blur(8px)',
+          backdropFilter: "blur(8px)",
           backgroundColor: (t) =>
-            t.palette.mode === 'dark'
-              ? 'rgba(39,39,41,0.92)'
-              : 'rgba(255,255,255,0.92)',
+            t.palette.mode === "dark"
+              ? "rgba(39,39,41,0.92)"
+              : "rgba(255,255,255,0.92)",
         }}
       >
         <Toolbar
@@ -407,17 +414,17 @@ export default function Navbar() {
               cursor: "pointer",
               display: "flex",
               alignItems: "center",
-              mr: { xs: 1, md: 1.5 },
+              // mr: { xs: 1, md: 1.5 },
               flexShrink: 0,
             }}
             onClick={() => handleNavigate("/")}
           >
             <Image
-              src="/high-color-logo.png"
+              src="/high-transparent-logo.png"
               alt="Fixio"
               width={80}
               height={28}
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: "contain" }}
               priority
             />
           </Box>
@@ -432,15 +439,15 @@ export default function Navbar() {
               flex: 1,
               maxWidth: 480,
               bgcolor: "background.default",
-              border: '1px solid',
-              borderColor: 'divider',
+              border: "1px solid",
+              borderColor: "divider",
               borderRadius: 20,
               px: 2,
               py: 0.375,
               mx: { sm: 1, md: 2 },
-              transition: 'all 0.2s ease',
+              transition: "all 0.2s ease",
               "&:focus-within": {
-                borderColor: 'primary.main',
+                borderColor: "primary.main",
                 boxShadow: (t) => `0 0 0 3px ${t.palette.primary.main}20`,
                 bgcolor: "background.paper",
               },
@@ -473,15 +480,15 @@ export default function Navbar() {
                   onClick={() => handleNavigate(path)}
                   aria-label={label}
                   sx={{
-                    bgcolor: active ? 'primary.main' : 'transparent',
-                    color: active ? 'primary.contrastText' : 'text.secondary',
+                    bgcolor: active ? "primary.main" : "transparent",
+                    color: active ? "primary.contrastText" : "text.secondary",
                     borderRadius: 2,
                     width: 36,
                     height: 36,
-                    '&:hover': {
-                      bgcolor: active ? 'primary.dark' : 'action.hover',
+                    "&:hover": {
+                      bgcolor: active ? "primary.dark" : "action.hover",
                     },
-                    transition: 'all 0.15s ease',
+                    transition: "all 0.15s ease",
                   }}
                 >
                   {active ? activeIcon : icon}
@@ -495,15 +502,24 @@ export default function Navbar() {
             {/* Notification bell */}
             <IconButton
               sx={{
-                color: pathname === "/notifications" ? 'primary.contrastText' : 'text.secondary',
-                bgcolor: pathname === "/notifications" ? 'primary.main' : 'transparent',
+                color:
+                  pathname === "/notifications"
+                    ? "primary.contrastText"
+                    : "text.secondary",
+                bgcolor:
+                  pathname === "/notifications"
+                    ? "primary.main"
+                    : "transparent",
                 borderRadius: 2,
                 width: 36,
                 height: 36,
-                '&:hover': {
-                  bgcolor: pathname === "/notifications" ? 'primary.dark' : 'action.hover',
+                "&:hover": {
+                  bgcolor:
+                    pathname === "/notifications"
+                      ? "primary.dark"
+                      : "action.hover",
                 },
-                transition: 'all 0.15s ease',
+                transition: "all 0.15s ease",
               }}
               aria-label="Notifikasi"
               onClick={() => router.push("/notifications")}
