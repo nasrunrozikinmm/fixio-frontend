@@ -6,12 +6,14 @@ interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   loading: boolean;
+  sessionExpired: boolean;
 }
 
 const initialState: AuthState = {
   user: null,
   isAuthenticated: false,
   loading: true, // true by default — akan jadi false setelah /auth/me resolve
+  sessionExpired: false,
 };
 
 const authSlice = createSlice({
@@ -27,6 +29,9 @@ const authSlice = createSlice({
       state.user = null;
       state.isAuthenticated = false;
       state.loading = false;
+    },
+    setSessionExpired(state, action: PayloadAction<boolean>) {
+      state.sessionExpired = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -53,5 +58,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { setUser, clearAuth } = authSlice.actions;
+export const { setUser, clearAuth, setSessionExpired } = authSlice.actions;
 export default authSlice.reducer;

@@ -5,6 +5,7 @@ import ThemeRegistry from "@/lib/ThemeRegistry";
 import { LoginModalProvider } from "@/lib/LoginModalContext";
 import AuthProvider from "@/lib/AuthProvider";
 import LoginModal from "@/components/auth/LoginModal";
+import SessionExpiredHandler from "@/components/auth/SessionExpiredHandler";
 import Navbar from "@/components/layout/Navbar";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
@@ -48,6 +49,7 @@ export default function RootLayout({
                 <main className="app-main">{children}</main>
                 <MobileBottomNav />
                 <LoginModal />
+                <SessionExpiredHandler />
               </AuthProvider>
             </LoginModalProvider>
           </ThemeRegistry>
