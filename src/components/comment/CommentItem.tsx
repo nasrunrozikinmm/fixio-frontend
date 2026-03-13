@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
@@ -61,6 +61,11 @@ export default function CommentItem({
   const { openLoginModal } = useLoginModal();
   const [deleteComment] = useDeleteCommentMutation();
   const [toggleVote] = useToggleCommentVoteMutation();
+
+  // Sync vote count when parent re-renders with fresh data
+  useEffect(() => {
+    setLocalVoteCount(comment.vote_count ?? 0);
+  }, [comment.vote_count]);
 
   const handleToggleReply = useCallback(() => {
     setShowReplyForm((prev) => !prev);

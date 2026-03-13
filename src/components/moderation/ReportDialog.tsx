@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -56,6 +56,14 @@ export default function ReportDialog({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [createReport, { isLoading }] = useCreateReportMutation();
+  const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timer on unmount to prevent state updates after unmount
+  useEffect(() => {
+    return () => {
+      if (closeTimerRef.current) clearTimeout(closeTimerRef.current);
+    };
+  }, []);
 
   const handleSubmit = useCallback(async () => {
     if (!reason) {
@@ -71,7 +79,8 @@ export default function ReportDialog({
         description: description.trim() || undefined,
       }).unwrap();
       setSuccess(true);
-      setTimeout(() => {
+      closeTimerRef.current = setTimeout(() => {
+        closeTimerRef.current = null;
         onClose();
         setSuccess(false);
         setReason('');
@@ -88,6 +97,10 @@ export default function ReportDialog({
 
   const handleClose = useCallback(() => {
     if (!isLoading) {
+      if (closeTimerRef.current) {
+        clearTimeout(closeTimerRef.current);
+        closeTimerRef.current = null;
+      }
       onClose();
       setReason('');
       setDescription('');

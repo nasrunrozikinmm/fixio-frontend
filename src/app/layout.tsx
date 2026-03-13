@@ -9,9 +9,21 @@ import Navbar from "@/components/layout/Navbar";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 export const metadata: Metadata = {
-  title: "Fixio — Forum Kritik & Solusi Kebijakan Publik",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  title: {
+    default: "Fixio — Forum Kritik & Solusi Kebijakan Publik",
+    template: "%s",
+  },
   description:
     "Platform digital untuk menyuarakan kritik terhadap kebijakan publik secara terstruktur, beserta solusi konkret.",
+  openGraph: {
+    siteName: "Fixio",
+    locale: "id_ID",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+  },
 };
 
 export default function RootLayout({

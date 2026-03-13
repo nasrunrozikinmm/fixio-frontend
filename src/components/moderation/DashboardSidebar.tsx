@@ -1,6 +1,6 @@
 'use client';
 
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import {
   Box,
   Drawer,
@@ -68,7 +68,6 @@ export default function DashboardSidebar({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const router = useRouter();
-  const pathname = usePathname();
 
   const handleClick = (item: SidebarItem) => {
     // Extract tab from path query or use path as key

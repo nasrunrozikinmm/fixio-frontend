@@ -20,6 +20,8 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useDeletePostMutation } from '@/store/api/postApi';
+import { useAuth } from '@/hooks/useAuth';
+import { useLoginModal } from '@/lib/LoginModalContext';
 import ReportDialog from '@/components/moderation/ReportDialog';
 
 // ────────────────────────────────────────────
@@ -45,6 +47,8 @@ interface PostMoreMenuProps {
  */
 export default function PostMoreMenu({ postId, postTitle, isOwner = false }: Readonly<PostMoreMenuProps>) {
   const router = useRouter();
+  const { isAuthenticated } = useAuth();
+  const { openLoginModal } = useLoginModal();
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
 
   // Menu state (React 19 compliant — state-based anchorEl)
@@ -89,8 +93,12 @@ export default function PostMoreMenu({ postId, postTitle, isOwner = false }: Rea
   const handleReportClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     setAnchorEl(null);
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
     setReportDialogOpen(true);
-  }, []);
+  }, [isAuthenticated, openLoginModal]);
 
   const handleDeleteCancel = useCallback(() => {
     setDeleteDialogOpen(false);

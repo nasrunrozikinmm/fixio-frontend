@@ -79,6 +79,13 @@ export default function ReportManager() {
   const reports = data?.data ?? [];
   const pagination = data?.pagination;
 
+  // ── Handlers (defined before columns so useMemo deps resolve) ──
+  const handleOpenReview = useCallback((report: Report) => {
+    setReviewTarget(report);
+    setReviewStatus('reviewed');
+    setReviewNote('');
+  }, []);
+
   // ── Columns ──
   const columns: GridColDef[] = useMemo(
     () => [
@@ -167,20 +174,13 @@ export default function ReportManager() {
           ) : null,
       },
     ],
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [handleOpenReview],
   );
 
   // ── Handlers ──
   const handleTabChange = useCallback((_: React.SyntheticEvent, value: string) => {
     setStatusFilter(value);
     setPage(0);
-  }, []);
-
-  const handleOpenReview = useCallback((report: Report) => {
-    setReviewTarget(report);
-    setReviewStatus('reviewed');
-    setReviewNote('');
   }, []);
 
   const handleCloseReview = useCallback(() => {

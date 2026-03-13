@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -70,12 +70,14 @@ export default function PostCard({
   const [optimisticCount, setOptimisticCount] = useState(post.vote_count);
   const [voteError, setVoteError] = useState<string | null>(null);
 
-  // Sync with server
+  // Sync with server — safe in useEffect to avoid render-phase setState
   const serverVote = userVoteData?.type ?? null;
-  if (serverVote !== optimisticVote && !voteError) {
-    setOptimisticVote(serverVote);
-    setOptimisticCount(post.vote_count);
-  }
+  useEffect(() => {
+    if (!voteError) {
+      setOptimisticVote(serverVote);
+      setOptimisticCount(post.vote_count);
+    }
+  }, [serverVote, post.vote_count, voteError]);
 
   const handleVote = useCallback(async (type: VoteType, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -330,13 +332,11 @@ export default function PostCard({
           <ShareMenu url={postUrl} title={post.title} />
 
           {/* More menu (owner: edit/delete, non-owner: report) */}
-          {user && (
-            <PostMoreMenu
-              postId={post.id}
-              postTitle={post.title}
-              isOwner={post.user_id === user.id}
-            />
-          )}
+          <PostMoreMenu
+            postId={post.id}
+            postTitle={post.title}
+            isOwner={!!user && post.user_id === user.id}
+          />
         </Stack>
       </CardContent>
     </Card>

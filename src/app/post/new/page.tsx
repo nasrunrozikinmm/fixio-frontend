@@ -97,6 +97,7 @@ function CreatePostForm() {
         region_id: values.region_id || undefined,
         impact_estimate: values.impact_estimate || undefined,
         references: values.references || undefined,
+        images: values.images?.length ? values.images : undefined,
         status: 'draft',
       }).unwrap();
       setDraftSnackbar({
