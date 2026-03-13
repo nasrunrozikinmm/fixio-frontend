@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Image from "next/image";
 import {
   AppBar,
   Toolbar,
@@ -315,13 +316,19 @@ export default function Navbar() {
           mb: 2,
         }}
       >
-        <Typography
-          variant="h3"
-          sx={{ fontWeight: 700, color: "primary.main", cursor: "pointer" }}
+        <Box
+          sx={{ cursor: "pointer", display: "flex", alignItems: "center" }}
           onClick={() => handleNavigate("/")}
         >
-          Fixio
-        </Typography>
+          <Image
+            src="/high-color-logo.png"
+            alt="Fixio"
+            width={80}
+            height={28}
+            style={{ objectFit: 'contain' }}
+            priority
+          />
+        </Box>
         <IconButton
           onClick={() => setDrawerOpen(false)}
           aria-label="Tutup menu"
@@ -386,20 +393,25 @@ export default function Navbar() {
           }}
         >
           {/* Logo */}
-          <Typography
-            variant="h3"
+          <Box
             sx={{
-              fontWeight: 700,
-              color: "primary.main",
               cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
               mr: { xs: 1, md: 1.5 },
               flexShrink: 0,
-              fontSize: { xs: "1rem", md: "1.125rem" },
             }}
             onClick={() => handleNavigate("/")}
           >
-            Fixio
-          </Typography>
+            <Image
+              src="/high-color-logo.png"
+              alt="Fixio"
+              width={80}
+              height={28}
+              style={{ objectFit: 'contain' }}
+              priority
+            />
+          </Box>
 
           {/* Search bar — Quora prominent center */}
           <Box
