@@ -75,6 +75,22 @@ export const commentApi = baseApi.injectEndpoints({
         ],
       },
     ),
+
+    /** Toggle upvote pada komentar */
+    toggleCommentVote: builder.mutation<
+      { voted: boolean; vote_count: number },
+      { commentId: string; postId: string }
+    >({
+      query: ({ commentId }) => ({
+        url: `/comments/${commentId}/vote`,
+        method: 'POST',
+      }),
+      transformResponse: (response: ApiResponse<{ voted: boolean; vote_count: number }>) =>
+        response.data,
+      invalidatesTags: (_result, _error, { postId }) => [
+        { type: 'Comments', id: postId },
+      ],
+    }),
   }),
 });
 
@@ -82,4 +98,5 @@ export const {
   useGetCommentsQuery,
   useCreateCommentMutation,
   useDeleteCommentMutation,
+  useToggleCommentVoteMutation,
 } = commentApi;

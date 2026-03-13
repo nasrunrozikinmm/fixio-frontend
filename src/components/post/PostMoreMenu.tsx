@@ -18,7 +18,9 @@ import Alert from '@mui/material/Alert';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useDeletePostMutation } from '@/store/api/postApi';
+import ReportDialog from '@/components/moderation/ReportDialog';
 
 // ────────────────────────────────────────────
 // Props
@@ -27,6 +29,8 @@ import { useDeletePostMutation } from '@/store/api/postApi';
 interface PostMoreMenuProps {
   postId: string;
   postTitle: string;
+  /** If true, shows owner actions (Edit/Delete). If false, shows "Laporkan". */
+  isOwner?: boolean;
 }
 
 // ────────────────────────────────────────────
@@ -39,7 +43,7 @@ interface PostMoreMenuProps {
  * Shows Edit and Delete options. Only rendered when the current
  * user owns the post (ownership check is the parent's responsibility).
  */
-export default function PostMoreMenu({ postId, postTitle }: Readonly<PostMoreMenuProps>) {
+export default function PostMoreMenu({ postId, postTitle, isOwner = false }: Readonly<PostMoreMenuProps>) {
   const router = useRouter();
   const [deletePost, { isLoading: isDeleting }] = useDeletePostMutation();
 
@@ -49,6 +53,9 @@ export default function PostMoreMenu({ postId, postTitle }: Readonly<PostMoreMen
 
   // Delete confirmation dialog
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  // Report dialog
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
 
   // Feedback snackbar
   const [snackbar, setSnackbar] = useState<{
@@ -77,6 +84,12 @@ export default function PostMoreMenu({ postId, postTitle }: Readonly<PostMoreMen
     e.stopPropagation();
     setAnchorEl(null);
     setDeleteDialogOpen(true);
+  }, []);
+
+  const handleReportClick = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setAnchorEl(null);
+    setReportDialogOpen(true);
   }, []);
 
   const handleDeleteCancel = useCallback(() => {
@@ -131,18 +144,30 @@ export default function PostMoreMenu({ postId, postTitle }: Readonly<PostMoreMen
         transformOrigin={{ horizontal: 'right', vertical: 'top' }}
         anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
-        <MenuItem onClick={handleEdit}>
-          <ListItemIcon>
-            <EditIcon fontSize="small" />
-          </ListItemIcon>
-          <ListItemText>Edit</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
-          <ListItemIcon>
-            <DeleteOutlineIcon fontSize="small" color="error" />
-          </ListItemIcon>
-          <ListItemText>Hapus</ListItemText>
-        </MenuItem>
+        {isOwner && (
+          <MenuItem onClick={handleEdit}>
+            <ListItemIcon>
+              <EditIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Edit</ListItemText>
+          </MenuItem>
+        )}
+        {isOwner && (
+          <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+            <ListItemIcon>
+              <DeleteOutlineIcon fontSize="small" color="error" />
+            </ListItemIcon>
+            <ListItemText>Hapus</ListItemText>
+          </MenuItem>
+        )}
+        {!isOwner && (
+          <MenuItem onClick={handleReportClick}>
+            <ListItemIcon>
+              <FlagOutlinedIcon fontSize="small" />
+            </ListItemIcon>
+            <ListItemText>Laporkan</ListItemText>
+          </MenuItem>
+        )}
       </Menu>
 
       {/* Delete confirmation dialog */}
@@ -198,6 +223,16 @@ export default function PostMoreMenu({ postId, postTitle }: Readonly<PostMoreMen
           {snackbar.message}
         </Alert>
       </Snackbar>
+
+      {/* Report dialog (non-owner only) */}
+      {!isOwner && (
+        <ReportDialog
+          open={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          targetType="post"
+          targetId={postId}
+        />
+      )}
     </>
   );
 }

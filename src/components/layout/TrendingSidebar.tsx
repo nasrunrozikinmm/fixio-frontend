@@ -7,10 +7,12 @@ import Typography from '@mui/material/Typography';
 import Stack from '@mui/material/Stack';
 import Skeleton from '@mui/material/Skeleton';
 import Avatar from '@mui/material/Avatar';
-import Divider from '@mui/material/Divider';
+import Chip from '@mui/material/Chip';
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
 import { useGetPostsQuery } from '@/store/api/postApi';
+import { useGetTrendingSectorsQuery } from '@/store/api/sectorApi';
 import type { User } from '@/types';
 
 // ────────────────────────────────────────────
@@ -28,6 +30,11 @@ export default function TrendingSidebar({ children }: Readonly<{ children?: Reac
     sort: 'vote_count desc',
     status: 'approved',
     limit: 50,
+  });
+
+  const { data: trendingSectors, isLoading: sectorsLoading } = useGetTrendingSectorsQuery({
+    days: 7,
+    limit: 5,
   });
 
   const trendingPosts = useMemo(() => {
@@ -128,6 +135,51 @@ export default function TrendingSidebar({ children }: Readonly<{ children?: Reac
 
       {/* ── Injected children (e.g. SidebarAd) ── */}
       {children}
+
+      {/* ── Trending Sectors ── */}
+      <Box
+        sx={{
+          bgcolor: 'background.paper',
+          borderRadius: 1,
+          border: '1px solid',
+          borderColor: 'divider',
+          p: 2,
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={0.75} sx={{ mb: 1.5 }}>
+          <WhatshotIcon sx={{ fontSize: 18, color: 'error.main' }} />
+          <Typography variant="body2" fontWeight={600}>
+            Sektor Populer
+          </Typography>
+        </Stack>
+
+        {sectorsLoading ? (
+          <Stack spacing={1}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={`sector-sk-${i.toString()}`} variant="rounded" width="60%" height={24} />
+            ))}
+          </Stack>
+        ) : !trendingSectors || trendingSectors.length === 0 ? (
+          <Typography variant="caption" color="text.secondary">
+            Belum ada data sektor.
+          </Typography>
+        ) : (
+          <Stack direction="row" flexWrap="wrap" useFlexGap spacing={0.75}>
+            {trendingSectors.map((sector) => (
+              <Chip
+                key={sector.id}
+                component={Link}
+                href={`/explore?sector=${sector.slug}`}
+                label={`${sector.name} (${sector.post_count ?? 0})`}
+                size="small"
+                clickable
+                variant="outlined"
+                sx={{ fontSize: '0.7rem' }}
+              />
+            ))}
+          </Stack>
+        )}
+      </Box>
 
       {/* ── Top Kontributor ── */}
       <Box

@@ -11,11 +11,16 @@ import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import ReplyIcon from '@mui/icons-material/Reply';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
+import ThumbUpOutlinedIcon from '@mui/icons-material/ThumbUpOutlined';
+import ThumbUpIcon from '@mui/icons-material/ThumbUp';
+import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { formatRelativeDate } from '@/lib/formatDate';
-import { useDeleteCommentMutation } from '@/store/api/commentApi';
+import { useDeleteCommentMutation, useToggleCommentVoteMutation } from '@/store/api/commentApi';
 import { useAuth } from '@/hooks/useAuth';
+import { useLoginModal } from '@/lib/LoginModalContext';
 import type { Comment } from '@/types';
 import CommentForm from './CommentForm';
+import ReportDialog from '@/components/moderation/ReportDialog';
 
 
 // ────────────────────────────────────────────
@@ -49,8 +54,13 @@ export default function CommentItem({
 }: Readonly<CommentItemProps>) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const { user } = useAuth();
+  const [localVoted, setLocalVoted] = useState(false);
+  const [localVoteCount, setLocalVoteCount] = useState(comment.vote_count ?? 0);
+  const [reportDialogOpen, setReportDialogOpen] = useState(false);
+  const { user, isAuthenticated } = useAuth();
+  const { openLoginModal } = useLoginModal();
   const [deleteComment] = useDeleteCommentMutation();
+  const [toggleVote] = useToggleCommentVoteMutation();
 
   const handleToggleReply = useCallback(() => {
     setShowReplyForm((prev) => !prev);
@@ -72,12 +82,45 @@ export default function CommentItem({
     setErrorMsg(null);
   }, []);
 
+  const handleVote = useCallback(async () => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+    // Optimistic update
+    const prevVoted = localVoted;
+    const prevCount = localVoteCount;
+    setLocalVoted(!prevVoted);
+    setLocalVoteCount(prevVoted ? prevCount - 1 : prevCount + 1);
+    try {
+      const result = await toggleVote({ commentId: comment.id, postId }).unwrap();
+      setLocalVoted(result.voted);
+      setLocalVoteCount(result.vote_count);
+    } catch {
+      // Rollback
+      setLocalVoted(prevVoted);
+      setLocalVoteCount(prevCount);
+      setErrorMsg('Gagal vote komentar. Coba lagi.');
+    }
+  }, [isAuthenticated, openLoginModal, localVoted, localVoteCount, toggleVote, comment.id, postId]);
+
   // Owner, moderator, or admin can delete
   const canDelete =
     user &&
     (user.id === comment.user_id ||
       user.role === 'moderator' ||
       user.role === 'administrator');
+
+  // Non-owners can report
+  const canReport = isAuthenticated && user && user.id !== comment.user_id;
+
+  const handleReportClick = useCallback(() => {
+    if (!isAuthenticated) {
+      openLoginModal();
+      return;
+    }
+    setReportDialogOpen(true);
+  }, [isAuthenticated, openLoginModal]);
 
   return (
     <Box>
@@ -117,8 +160,30 @@ export default function CommentItem({
           {comment.content}
         </Typography>
 
-        {/* Actions: reply button (only for top-level comments) + delete */}
+        {/* Actions: upvote + reply button (only for top-level comments) + delete */}
         <Stack direction="row" spacing={0.5} alignItems="center">
+          <Button
+            size="small"
+            startIcon={
+              localVoted ? (
+                <ThumbUpIcon sx={{ fontSize: 14 }} />
+              ) : (
+                <ThumbUpOutlinedIcon sx={{ fontSize: 14 }} />
+              )
+            }
+            onClick={handleVote}
+            sx={{
+              textTransform: 'none',
+              color: localVoted ? 'primary.main' : 'text.secondary',
+              fontSize: '0.75rem',
+              minHeight: 0,
+              py: 0.25,
+              '&:hover': { color: 'primary.main' },
+            }}
+          >
+            {localVoteCount > 0 ? localVoteCount : 'Suka'}
+          </Button>
+
           {!isReply && (
             <Button
               size="small"
@@ -150,6 +215,20 @@ export default function CommentItem({
               <DeleteOutlineIcon sx={{ fontSize: 16 }} />
             </IconButton>
           )}
+
+          {canReport && (
+            <IconButton
+              size="small"
+              onClick={handleReportClick}
+              aria-label="Laporkan komentar"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': { color: 'warning.main' },
+              }}
+            >
+              <FlagOutlinedIcon sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
         </Stack>
       </Box>
 
@@ -178,6 +257,16 @@ export default function CommentItem({
             />
           ))}
         </Box>
+      )}
+
+      {/* Report dialog */}
+      {canReport && (
+        <ReportDialog
+          open={reportDialogOpen}
+          onClose={() => setReportDialogOpen(false)}
+          targetType="comment"
+          targetId={comment.id}
+        />
       )}
 
       {/* Error snackbar */}

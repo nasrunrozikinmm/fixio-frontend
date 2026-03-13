@@ -53,6 +53,16 @@ export const sectorApi = baseApi.injectEndpoints({
         { type: 'Sectors', id: 'LIST' },
       ],
     }),
+
+    /** Get trending sectors by post count */
+    getTrendingSectors: builder.query<Sector[], { days?: number; limit?: number } | void>({
+      query: (params) => ({
+        url: '/sectors/trending',
+        params: params ?? undefined,
+      }),
+      transformResponse: (response: ApiResponse<Sector[]>) => response.data,
+      providesTags: [{ type: 'Sectors', id: 'TRENDING' }],
+    }),
   }),
 });
 
@@ -61,4 +71,5 @@ export const {
   useCreateSectorMutation,
   useUpdateSectorMutation,
   useDeleteSectorMutation,
+  useGetTrendingSectorsQuery,
 } = sectorApi;

@@ -329,9 +329,13 @@ export default function PostCard({
           {/* Share */}
           <ShareMenu url={postUrl} title={post.title} />
 
-          {/* More menu (owner only) */}
-          {user && post.user_id === user.id && (
-            <PostMoreMenu postId={post.id} postTitle={post.title} />
+          {/* More menu (owner: edit/delete, non-owner: report) */}
+          {user && (
+            <PostMoreMenu
+              postId={post.id}
+              postTitle={post.title}
+              isOwner={post.user_id === user.id}
+            />
           )}
         </Stack>
       </CardContent>

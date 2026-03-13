@@ -10,6 +10,7 @@ import DashboardSidebar, {
 } from '@/components/moderation/DashboardSidebar';
 import ModerationQueue from '@/components/moderation/ModerationQueue';
 import ModerationHistory from '@/components/moderation/ModerationHistory';
+import ReportManager from '@/components/moderation/ReportManager';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
@@ -76,6 +77,7 @@ export default function ModeratorPage() {
 
           {/* Tab content */}
           {activeTab === 'main' && <ModerationQueue />}
+          {activeTab === 'reports' && <ReportManager />}
           {activeTab === 'history' && <ModerationHistory />}
         </Box>
       </Box>

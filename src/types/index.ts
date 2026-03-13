@@ -75,6 +75,7 @@ export interface Comment {
   post_id: string;
   parent_id: string | null;
   content: string;
+  vote_count: number;
   created_at: string;
   updated_at: string;
 
@@ -193,4 +194,26 @@ export interface NotificationListResponse {
   total: number;
   page: number;
   limit: number;
+}
+
+// ============================================================
+// Report
+// ============================================================
+export type ReportReason = 'spam' | 'harassment' | 'misinformation' | 'hate_speech' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'dismissed';
+
+export interface Report {
+  id: string;
+  reporter_id: string;
+  target_type: 'post' | 'comment';
+  target_id: string;
+  reason: ReportReason;
+  description: string;
+  status: ReportStatus;
+  reviewed_by: string | null;
+  review_note: string;
+  created_at: string;
+  updated_at: string;
+  reporter?: User;
+  reviewer?: User;
 }

@@ -19,6 +19,7 @@ import DashboardIcon from '@mui/icons-material/DashboardOutlined';
 import PeopleIcon from '@mui/icons-material/PeopleOutlined';
 import CategoryIcon from '@mui/icons-material/CategoryOutlined';
 import MapIcon from '@mui/icons-material/MapOutlined';
+import FlagIcon from '@mui/icons-material/FlagOutlined';
 
 const DRAWER_WIDTH = 260;
 
@@ -33,12 +34,14 @@ export interface SidebarItem {
 
 export const MODERATOR_MENU: SidebarItem[] = [
   { label: 'Antrian Review', icon: <QueueIcon />, path: '/moderator' },
+  { label: 'Laporan', icon: <FlagIcon />, path: '/moderator?tab=reports' },
   { label: 'Riwayat', icon: <HistoryIcon />, path: '/moderator?tab=history' },
 ];
 
 export const ADMIN_MENU: SidebarItem[] = [
   { label: 'Overview', icon: <DashboardIcon />, path: '/admin' },
   { label: 'Kelola User', icon: <PeopleIcon />, path: '/admin?tab=users' },
+  { label: 'Laporan', icon: <FlagIcon />, path: '/admin?tab=reports' },
   { label: 'Kelola Sektor', icon: <CategoryIcon />, path: '/admin?tab=sectors' },
   { label: 'Kelola Wilayah', icon: <MapIcon />, path: '/admin?tab=regions' },
 ];

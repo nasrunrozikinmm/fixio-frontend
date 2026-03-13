@@ -12,6 +12,7 @@ import StatsCards from '@/components/admin/StatsCards';
 import UserTable from '@/components/admin/UserTable';
 import SectorManager from '@/components/admin/SectorManager';
 import RegionManager from '@/components/admin/RegionManager';
+import ReportManager from '@/components/moderation/ReportManager';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
 
@@ -78,6 +79,7 @@ export default function AdminPage() {
           {/* Tab content */}
           {activeTab === 'main' && <StatsCards />}
           {activeTab === 'users' && <UserTable />}
+          {activeTab === 'reports' && <ReportManager />}
           {activeTab === 'sectors' && <SectorManager />}
           {activeTab === 'regions' && <RegionManager />}
         </Box>
