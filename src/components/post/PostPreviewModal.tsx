@@ -16,7 +16,9 @@ import CircularProgress from '@mui/material/CircularProgress';
 import EditIcon from '@mui/icons-material/Edit';
 import SendIcon from '@mui/icons-material/Send';
 import { SectorBadge, RegionBadge } from '@/components/post';
-import { useCreatePostMutation } from '@/store/api/postApi';
+import { RichTextContent } from '@/components/editor';
+import ImageGallery from './ImageGallery';
+import { useCreatePostMutation, useUpdatePostMutation } from '@/store/api/postApi';
 import type { PostFormData } from '@/schemas/postSchema';
 import type { Sector, Region } from '@/types';
 
@@ -44,7 +46,7 @@ function SectionBox({ icon, label, headerBg, children }: Readonly<SectionBoxProp
       <Box
         sx={{
           bgcolor: headerBg,
-          color: '#FFFFFF',
+          color: 'common.white',
           px: 2,
           py: 1,
           display: 'flex',
@@ -60,9 +62,7 @@ function SectionBox({ icon, label, headerBg, children }: Readonly<SectionBoxProp
         </Typography>
       </Box>
       <Box sx={{ px: 2, py: 1.5 }}>
-        <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.7 }}>
-          {children}
-        </Typography>
+        {children}
       </Box>
     </Box>
   );
@@ -78,6 +78,10 @@ interface PostPreviewModalProps {
   formData: PostFormData;
   sector: Sector | null;
   region: Region | null;
+  /** When 'edit', uses updatePost instead of createPost */
+  mode?: 'create' | 'edit';
+  /** Required when mode is 'edit' */
+  postId?: string;
 }
 
 // ────────────────────────────────────────────
@@ -99,27 +103,44 @@ export default function PostPreviewModal({
   formData,
   sector,
   region,
+  mode = 'create',
+  postId,
 }: Readonly<PostPreviewModalProps>) {
   const router = useRouter();
-  const [createPost, { isLoading }] = useCreatePostMutation();
+  const [createPost, { isLoading: isCreating }] = useCreatePostMutation();
+  const [updatePost, { isLoading: isUpdating }] = useUpdatePostMutation();
+  const isLoading = isCreating || isUpdating;
   const [apiError, setApiError] = useState<string | null>(null);
 
   const handleSubmit = useCallback(async () => {
     setApiError(null);
     try {
-      const post = await createPost({
+      const body = {
         title: formData.title,
-        sector_id: formData.sector_id,
-        region_id: formData.region_id,
+        sector_id: formData.sector_id || undefined,
+        region_id: formData.region_id || undefined,
         criticism: formData.criticism,
         solution: formData.solution,
         impact_estimate: formData.impact_estimate || undefined,
         references: formData.references || undefined,
-        status: 'pending_review',
-      }).unwrap();
+        images: formData.images?.length ? formData.images : undefined,
+      };
+
+      let resultId: string;
+
+      if (mode === 'edit' && postId) {
+        const post = await updatePost({ id: postId, body }).unwrap();
+        resultId = post.id;
+      } else {
+        const post = await createPost({
+          ...body,
+          status: 'pending_review',
+        }).unwrap();
+        resultId = post.id;
+      }
 
       onClose();
-      router.push(`/post/${post.id}`);
+      router.push(`/post/${resultId}`);
     } catch (err) {
       const msg =
         err && typeof err === 'object' && 'data' in err
@@ -127,7 +148,7 @@ export default function PostPreviewModal({
           : null;
       setApiError(msg ?? 'Gagal mengirim post. Silakan coba lagi.');
     }
-  }, [createPost, formData, onClose, router]);
+  }, [createPost, updatePost, formData, mode, postId, onClose, router]);
 
   const handleClose = useCallback(() => {
     setApiError(null);
@@ -164,16 +185,21 @@ export default function PostPreviewModal({
             {formData.title}
           </Typography>
 
+          {/* Images */}
+          {formData.images && formData.images.length > 0 && (
+            <ImageGallery images={formData.images} variant="detail" />
+          )}
+
           <Divider />
 
           {/* Kritik */}
-          <SectionBox icon="📌" label="Kritik" headerBg="#1B3A5C">
-            {formData.criticism}
+          <SectionBox icon="📌" label="Kritik" headerBg="primary.main">
+            <RichTextContent html={formData.criticism} />
           </SectionBox>
 
           {/* Solusi */}
-          <SectionBox icon="💡" label="Solusi" headerBg="#2E7D4F">
-            {formData.solution}
+          <SectionBox icon="💡" label="Solusi" headerBg="secondary.main">
+            <RichTextContent html={formData.solution} />
           </SectionBox>
 
           {/* Estimasi Dampak */}
@@ -237,7 +263,7 @@ export default function PostPreviewModal({
           disabled={isLoading}
           sx={{ textTransform: 'none', fontWeight: 600 }}
         >
-          Submit
+          {mode === 'edit' ? 'Update' : 'Submit'}
         </Button>
       </DialogActions>
     </Dialog>

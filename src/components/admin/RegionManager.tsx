@@ -1,16 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   IconButton,
   Tooltip,
   Button,
@@ -29,6 +22,7 @@ import {
   Skeleton,
   Chip,
 } from '@mui/material';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
@@ -53,7 +47,7 @@ const TYPE_COLORS: Record<string, 'primary' | 'success' | 'secondary' | 'default
 };
 
 /**
- * RegionManager — CRUD wilayah via modal + parent dropdown + confirm delete.
+ * RegionManager — CRUD wilayah via DataGrid + modal + parent dropdown + confirm delete.
  */
 export default function RegionManager() {
   // Form dialog state
@@ -88,6 +82,17 @@ export default function RegionManager() {
     if (regionType === 'kota') return r.type === 'provinsi';
     return false;
   });
+
+  // Rows with index and parent name resolved
+  const rows = useMemo(
+    () =>
+      (regions ?? []).map((r, idx) => ({
+        ...r,
+        rowNo: idx + 1,
+        parentName: regions?.find((p) => p.id === r.parent_id)?.name ?? '-',
+      })),
+    [regions],
+  );
 
   const openCreate = () => {
     setEditRegion(null);
@@ -143,6 +148,79 @@ export default function RegionManager() {
     }
   }, [deleteTarget, deleteRegion]);
 
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: 'rowNo',
+        headerName: 'No',
+        width: 60,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+      },
+      {
+        field: 'name',
+        headerName: 'Nama',
+        flex: 1,
+        minWidth: 180,
+        renderCell: (params: GridRenderCellParams) => (
+          <Typography variant="body2" fontWeight={500} sx={{ lineHeight: '52px' }}>
+            {params.value}
+          </Typography>
+        ),
+      },
+      {
+        field: 'type',
+        headerName: 'Tipe',
+        width: 130,
+        renderCell: (params: GridRenderCellParams) => (
+          <Chip
+            label={params.value}
+            color={TYPE_COLORS[params.value as string] ?? 'default'}
+            size="small"
+            sx={{ fontWeight: 600, textTransform: 'capitalize' }}
+          />
+        ),
+      },
+      {
+        field: 'parentName',
+        headerName: 'Parent',
+        flex: 1,
+        minWidth: 150,
+        renderCell: (params: GridRenderCellParams) => (
+          <Typography variant="body2" color="text.secondary" sx={{ lineHeight: '52px' }}>
+            {params.value}
+          </Typography>
+        ),
+      },
+      {
+        field: 'actions',
+        headerName: 'Aksi',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params: GridRenderCellParams) => (
+          <>
+            <Tooltip title="Edit">
+              <IconButton size="small" onClick={() => openEdit(params.row as Region)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Hapus">
+              <IconButton size="small" color="error" onClick={() => setDeleteTarget(params.row as Region)}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </>
+        ),
+      },
+    ],
+    [],
+  );
+
   if (isLoading) {
     return (
       <Box>
@@ -156,12 +234,7 @@ export default function RegionManager() {
 
   return (
     <Box>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
             Kelola Wilayah
@@ -170,77 +243,39 @@ export default function RegionManager() {
             {regions?.length ?? 0} wilayah terdaftar
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={openCreate}
-          size="small"
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} size="small">
           Tambah Wilayah
         </Button>
       </Stack>
 
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{ borderRadius: 2, overflowX: 'auto' }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'grey.50' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Nama</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Tipe</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Parent</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Aksi
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {regions?.map((region) => {
-              const parent = regions.find((r) => r.id === region.parent_id);
-              return (
-                <TableRow key={region.id} hover>
-                  <TableCell>
-                    <Typography variant="body2" fontWeight={500}>
-                      {region.name}
-                    </Typography>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={region.type}
-                      color={TYPE_COLORS[region.type] ?? 'default'}
-                      size="small"
-                      sx={{ fontWeight: 600, textTransform: 'capitalize' }}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Typography variant="body2" color="text.secondary">
-                      {parent?.name ?? '-'}
-                    </Typography>
-                  </TableCell>
-                  <TableCell align="right">
-                    <Tooltip title="Edit">
-                      <IconButton size="small" onClick={() => openEdit(region)}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Hapus">
-                      <IconButton
-                        size="small"
-                        color="error"
-                        onClick={() => setDeleteTarget(region)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Tooltip>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        pageSizeOptions={[10, 25]}
+        initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+        disableRowSelectionOnClick
+        autoHeight
+        rowHeight={52}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+          '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 600 },
+          '& .MuiDataGrid-cell[data-field="rowNo"], & .MuiDataGrid-columnHeader[data-field="rowNo"]': {
+            position: 'sticky',
+            left: 0,
+            bgcolor: 'background.paper',
+            zIndex: 1,
+          },
+          '& .MuiDataGrid-cell[data-field="actions"], & .MuiDataGrid-columnHeader[data-field="actions"]': {
+            position: 'sticky',
+            right: 0,
+            bgcolor: 'background.paper',
+            zIndex: 1,
+          },
+        }}
+      />
 
       {/* Create/Edit Dialog */}
       <Dialog
@@ -310,18 +345,10 @@ export default function RegionManager() {
           )}
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDialogOpen(false)}
-            disabled={isMutating}
-            color="inherit"
-          >
+          <Button onClick={() => setDialogOpen(false)} disabled={isMutating} color="inherit">
             Batal
           </Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={isMutating || !regionName.trim()}
-          >
+          <Button onClick={handleSubmit} variant="contained" disabled={isMutating || !regionName.trim()}>
             {isMutating ? 'Menyimpan...' : 'Simpan'}
           </Button>
         </DialogActions>
@@ -335,9 +362,7 @@ export default function RegionManager() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>
-          Hapus Wilayah?
-        </DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>Hapus Wilayah?</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
             Wilayah <strong>{deleteTarget?.name}</strong> ({deleteTarget?.type}) akan dihapus.
@@ -347,19 +372,10 @@ export default function RegionManager() {
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDeleteTarget(null)}
-            disabled={deleting}
-            color="inherit"
-          >
+          <Button onClick={() => setDeleteTarget(null)} disabled={deleting} color="inherit">
             Batal
           </Button>
-          <Button
-            onClick={handleDelete}
-            variant="contained"
-            color="error"
-            disabled={deleting}
-          >
+          <Button onClick={handleDelete} variant="contained" color="error" disabled={deleting}>
             {deleting ? 'Menghapus...' : 'Hapus'}
           </Button>
         </DialogActions>

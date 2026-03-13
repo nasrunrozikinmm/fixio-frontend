@@ -16,6 +16,7 @@ import CancelOutlinedIcon from '@mui/icons-material/CancelOutlined';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import type { Post } from '@/types';
 import { formatLocalDate } from '@/lib/formatDate';
+import { stripHtml } from '@/components/editor';
 
 interface ReviewItemProps {
   post: Post;
@@ -101,7 +102,7 @@ export default function ReviewItem({
                 overflow: 'hidden',
               }}
             >
-              {post.criticism}
+              {stripHtml(post.criticism)}
             </Typography>
           </Box>
 

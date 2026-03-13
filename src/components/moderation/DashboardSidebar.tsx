@@ -8,7 +8,6 @@ import {
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  Toolbar,
   Typography,
   Badge,
   useMediaQuery,
@@ -85,11 +84,11 @@ export default function DashboardSidebar({
 
   const drawerContent = (
     <Box>
-      <Toolbar>
+      <Box sx={{ px: 2, py: 2 }}>
         <Typography variant="h6" fontWeight={700} color="primary">
           {title}
         </Typography>
-      </Toolbar>
+      </Box>
       <List sx={{ px: 1 }}>
         {items.map((item) => (
           <ListItemButton
@@ -146,6 +145,8 @@ export default function DashboardSidebar({
           boxSizing: 'border-box',
           borderRight: '1px solid',
           borderColor: 'divider',
+          top: { xs: 48, md: 52 },
+          height: { xs: 'calc(100% - 48px)', md: 'calc(100% - 52px)' },
         },
       }}
     >

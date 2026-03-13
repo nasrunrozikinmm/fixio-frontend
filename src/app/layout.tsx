@@ -6,6 +6,7 @@ import { LoginModalProvider } from "@/lib/LoginModalContext";
 import AuthProvider from "@/lib/AuthProvider";
 import LoginModal from "@/components/auth/LoginModal";
 import Navbar from "@/components/layout/Navbar";
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 
 export const metadata: Metadata = {
   title: "Fixio — Forum Kritik & Solusi Kebijakan Publik",
@@ -32,7 +33,8 @@ export default function RootLayout({
             <LoginModalProvider>
               <AuthProvider>
                 <Navbar />
-                <main>{children}</main>
+                <main className="app-main">{children}</main>
+                <MobileBottomNav />
                 <LoginModal />
               </AuthProvider>
             </LoginModalProvider>

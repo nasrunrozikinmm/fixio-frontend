@@ -66,6 +66,7 @@ export const postApi = baseApi.injectEndpoints({
       solution: string;
       impact_estimate?: string;
       references?: string;
+      images?: string[];
       status?: 'draft' | 'pending_review';
     }>({
       query: (body) => ({
@@ -86,6 +87,7 @@ export const postApi = baseApi.injectEndpoints({
       solution: string;
       impact_estimate: string;
       references: string;
+      images: string[];
     }> }>({
       query: ({ id, body }) => ({
         url: `/posts/${id}`,
@@ -110,6 +112,42 @@ export const postApi = baseApi.injectEndpoints({
         { type: 'Posts', id: 'LIST' },
       ],
     }),
+
+    /** Following feed — posts from users the current user follows */
+    getFollowingFeed: builder.query<PaginatedResponse<Post>['data'], GetPostsParams>({
+      query: (params) => ({
+        url: '/posts/following',
+        params,
+      }),
+      transformResponse: (response: PaginatedResponse<Post>) => response.data,
+      providesTags: (result) =>
+        result
+          ? [
+              ...result.data.map(({ id }) => ({ type: 'Posts' as const, id })),
+              { type: 'Posts', id: 'FOLLOWING' },
+            ]
+          : [{ type: 'Posts', id: 'FOLLOWING' }],
+    }),
+
+    /** Related posts — same sector, fallback to popular */
+    getRelatedPosts: builder.query<Post[], { id: string; limit?: number }>({
+      query: ({ id, limit = 5 }) => ({
+        url: `/posts/${id}/related`,
+        params: { limit },
+      }),
+      transformResponse: (response: ApiResponse<Post[]>) => response.data,
+      providesTags: (_result, _error, { id }) => [{ type: 'Posts', id: `RELATED_${id}` }],
+    }),
+
+    /** Upload images — returns array of public URLs */
+    uploadImages: builder.mutation<{ urls: string[] }, FormData>({
+      query: (formData) => ({
+        url: '/uploads/images',
+        method: 'POST',
+        body: formData,
+      }),
+      transformResponse: (response: ApiResponse<{ urls: string[] }>) => response.data,
+    }),
   }),
 });
 
@@ -119,4 +157,7 @@ export const {
   useCreatePostMutation,
   useUpdatePostMutation,
   useDeletePostMutation,
+  useGetFollowingFeedQuery,
+  useGetRelatedPostsQuery,
+  useUploadImagesMutation,
 } = postApi;

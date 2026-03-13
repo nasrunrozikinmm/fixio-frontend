@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from "react";
+import { useRouter, usePathname } from "next/navigation";
 import {
   AppBar,
   Toolbar,
@@ -19,30 +19,61 @@ import {
   List,
   ListItemButton,
   Skeleton,
-} from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
-import CloseIcon from '@mui/icons-material/Close';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import EditNoteIcon from '@mui/icons-material/EditNote';
-import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import AdminPanelSettingsOutlinedIcon from '@mui/icons-material/AdminPanelSettingsOutlined';
-import LogoutIcon from '@mui/icons-material/Logout';
-import SearchIcon from '@mui/icons-material/Search';
-import { useAuth } from '@/hooks/useAuth';
-import { useLoginModal } from '@/lib/LoginModalContext';
-import { useLogoutMutation } from '@/store/api/authApi';
+  Badge,
+  InputBase,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
+import CloseIcon from "@mui/icons-material/Close";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import HomeIcon from "@mui/icons-material/Home";
+import ExploreOutlinedIcon from "@mui/icons-material/ExploreOutlined";
+import ExploreIcon from "@mui/icons-material/Explore";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import AdminPanelSettingsOutlinedIcon from "@mui/icons-material/AdminPanelSettingsOutlined";
+import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
+import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
+import BookmarkBorderOutlinedIcon from "@mui/icons-material/BookmarkBorderOutlined";
+import SearchIcon from "@mui/icons-material/Search";
+import ThemeToggle from "@/components/layout/ThemeToggle";
+import { useAuth } from "@/hooks/useAuth";
+import { useLoginModal } from "@/lib/LoginModalContext";
+import { useLogoutMutation } from "@/store/api/authApi";
+import { useGetUnreadCountQuery } from "@/store/api/notificationApi";
 
-// ---- Nav links ----
-const NAV_LINKS = [
-  { label: 'Beranda', path: '/' },
-  { label: 'Explore', path: '/explore' },
+// ────────────────────────────────────────────
+// Nav icon items (Quora-style icon nav)
+// ────────────────────────────────────────────
+const NAV_ICONS = [
+  {
+    label: "Beranda",
+    path: "/",
+    icon: <HomeOutlinedIcon />,
+    activeIcon: <HomeIcon />,
+  },
+  {
+    label: "Explore",
+    path: "/explore",
+    icon: <ExploreOutlinedIcon />,
+    activeIcon: <ExploreIcon />,
+  },
 ];
 
 export default function Navbar() {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated, loading, isAdmin, isModerator } = useAuth();
   const { openLoginModal } = useLoginModal();
   const [logout] = useLogoutMutation();
+  const { data: unreadCount = 0 } = useGetUnreadCountQuery(undefined, {
+    skip: !isAuthenticated,
+    pollingInterval: 30000,
+  });
+
+  // Search state
+  const [searchValue, setSearchValue] = useState("");
 
   // Avatar dropdown state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -67,18 +98,31 @@ export default function Navbar() {
     setDrawerOpen(false);
     try {
       await logout().unwrap();
-      router.push('/');
+      router.push("/");
     } catch {
-      // error silenced — state sudah di-clear via extraReducers
+      // error silenced
     }
   };
 
-  // ---- Auth section renderers (avoid nested ternaries) ----
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    const q = searchValue.trim();
+    if (q) {
+      router.push(`/explore?q=${encodeURIComponent(q)}`);
+      setSearchValue("");
+    }
+  };
+
+  // ---- Auth section renderers ----
   const renderMobileAuth = () => {
     if (loading) {
       return (
         <Box sx={{ px: 2, py: 2 }}>
-          <Skeleton variant="rectangular" height={36} sx={{ borderRadius: 1 }} />
+          <Skeleton
+            variant="rectangular"
+            height={36}
+            sx={{ borderRadius: 1 }}
+          />
         </Box>
       );
     }
@@ -86,29 +130,51 @@ export default function Navbar() {
       return (
         <List>
           <ListItemButton onClick={() => handleNavigate(`/user/${user.id}`)}>
-            <ListItemIcon><PersonOutlineIcon /></ListItemIcon>
+            <ListItemIcon>
+              <PersonOutlineIcon />
+            </ListItemIcon>
             <ListItemText primary="Profil Saya" />
           </ListItemButton>
-          <ListItemButton onClick={() => handleNavigate('/post/new')}>
-            <ListItemIcon><EditNoteIcon /></ListItemIcon>
+          <ListItemButton onClick={() => handleNavigate("/post/new")}>
+            <ListItemIcon>
+              <EditNoteIcon />
+            </ListItemIcon>
             <ListItemText primary="Buat Post" />
           </ListItemButton>
+          <ListItemButton onClick={() => handleNavigate("/bookmarks")}>
+            <ListItemIcon>
+              <BookmarkBorderOutlinedIcon />
+            </ListItemIcon>
+            <ListItemText primary="Bookmark" />
+          </ListItemButton>
+          <ListItemButton onClick={() => handleNavigate("/settings")}>
+            <ListItemIcon>
+              <SettingsOutlinedIcon />
+            </ListItemIcon>
+            <ListItemText primary="Pengaturan" />
+          </ListItemButton>
           {isModerator && (
-            <ListItemButton onClick={() => handleNavigate('/moderator')}>
-              <ListItemIcon><ShieldOutlinedIcon /></ListItemIcon>
+            <ListItemButton onClick={() => handleNavigate("/moderator")}>
+              <ListItemIcon>
+                <ShieldOutlinedIcon />
+              </ListItemIcon>
               <ListItemText primary="Moderasi" />
             </ListItemButton>
           )}
           {isAdmin && (
-            <ListItemButton onClick={() => handleNavigate('/admin')}>
-              <ListItemIcon><AdminPanelSettingsOutlinedIcon /></ListItemIcon>
+            <ListItemButton onClick={() => handleNavigate("/admin")}>
+              <ListItemIcon>
+                <AdminPanelSettingsOutlinedIcon />
+              </ListItemIcon>
               <ListItemText primary="Admin" />
             </ListItemButton>
           )}
           <Divider sx={{ my: 1 }} />
           <ListItemButton onClick={handleLogout}>
-            <ListItemIcon><LogoutIcon color="error" /></ListItemIcon>
-            <ListItemText primary="Logout" sx={{ color: 'error.main' }} />
+            <ListItemIcon>
+              <LogoutIcon color="error" />
+            </ListItemIcon>
+            <ListItemText primary="Logout" sx={{ color: "error.main" }} />
           </ListItemButton>
         </List>
       );
@@ -119,7 +185,10 @@ export default function Navbar() {
           variant="contained"
           color="primary"
           fullWidth
-          onClick={() => { setDrawerOpen(false); openLoginModal(); }}
+          onClick={() => {
+            setDrawerOpen(false);
+            openLoginModal();
+          }}
         >
           Login
         </Button>
@@ -129,7 +198,7 @@ export default function Navbar() {
 
   const renderDesktopAuth = () => {
     if (loading) {
-      return <Skeleton variant="circular" width={36} height={36} />;
+      return <Skeleton variant="circular" width={32} height={32} />;
     }
     if (isAuthenticated && user) {
       return (
@@ -138,14 +207,14 @@ export default function Navbar() {
             onClick={handleMenuOpen}
             size="small"
             aria-label="Menu profil"
-            aria-controls={menuOpen ? 'profile-menu' : undefined}
+            aria-controls={menuOpen ? "profile-menu" : undefined}
             aria-haspopup="true"
-            aria-expanded={menuOpen ? 'true' : undefined}
+            aria-expanded={menuOpen ? "true" : undefined}
           >
             <Avatar
               src={user.avatar_url}
               alt={user.name}
-              sx={{ width: 36, height: 36 }}
+              sx={{ width: 32, height: 32 }}
             >
               {user.name?.charAt(0).toUpperCase()}
             </Avatar>
@@ -156,39 +225,55 @@ export default function Navbar() {
             anchorEl={anchorEl}
             open={menuOpen}
             onClose={handleMenuClose}
-            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            transformOrigin={{ horizontal: "right", vertical: "top" }}
+            anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
             slotProps={{
               paper: {
                 sx: {
                   mt: 1,
                   minWidth: 200,
-                  borderRadius: '12px',
-                  boxShadow: '0 4px 6px rgba(0,0,0,0.07)',
+                  borderRadius: "8px",
+                  border: "1px solid",
+                  borderColor: "divider",
+                  boxShadow: 3,
                 },
               },
             }}
           >
             <MenuItem onClick={() => handleNavigate(`/user/${user.id}`)}>
-              <ListItemIcon><PersonOutlineIcon fontSize="small" /></ListItemIcon>
+              <ListItemIcon>
+                <PersonOutlineIcon fontSize="small" />
+              </ListItemIcon>
               <ListItemText>Profil Saya</ListItemText>
             </MenuItem>
-            <MenuItem onClick={() => handleNavigate('/post/new')}>
-              <ListItemIcon><EditNoteIcon fontSize="small" /></ListItemIcon>
-              <ListItemText>Buat Post</ListItemText>
+            <MenuItem onClick={() => handleNavigate("/bookmarks")}>
+              <ListItemIcon>
+                <BookmarkBorderOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Bookmark</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleNavigate("/settings")}>
+              <ListItemIcon>
+                <SettingsOutlinedIcon fontSize="small" />
+              </ListItemIcon>
+              <ListItemText>Pengaturan</ListItemText>
             </MenuItem>
 
             {(isModerator || isAdmin) && <Divider />}
 
             {isModerator && (
-              <MenuItem onClick={() => handleNavigate('/moderator')}>
-                <ListItemIcon><ShieldOutlinedIcon fontSize="small" /></ListItemIcon>
+              <MenuItem onClick={() => handleNavigate("/moderator")}>
+                <ListItemIcon>
+                  <ShieldOutlinedIcon fontSize="small" />
+                </ListItemIcon>
                 <ListItemText>Moderasi</ListItemText>
               </MenuItem>
             )}
             {isAdmin && (
-              <MenuItem onClick={() => handleNavigate('/admin')}>
-                <ListItemIcon><AdminPanelSettingsOutlinedIcon fontSize="small" /></ListItemIcon>
+              <MenuItem onClick={() => handleNavigate("/admin")}>
+                <ListItemIcon>
+                  <AdminPanelSettingsOutlinedIcon fontSize="small" />
+                </ListItemIcon>
                 <ListItemText>Admin</ListItemText>
               </MenuItem>
             )}
@@ -196,8 +281,10 @@ export default function Navbar() {
             <Divider />
 
             <MenuItem onClick={handleLogout}>
-              <ListItemIcon><LogoutIcon fontSize="small" color="error" /></ListItemIcon>
-              <ListItemText sx={{ color: 'error.main' }}>Logout</ListItemText>
+              <ListItemIcon>
+                <LogoutIcon fontSize="small" color="error" />
+              </ListItemIcon>
+              <ListItemText sx={{ color: "error.main" }}>Logout</ListItemText>
             </MenuItem>
           </Menu>
         </>
@@ -207,8 +294,8 @@ export default function Navbar() {
       <Button
         variant="contained"
         color="primary"
+        size="small"
         onClick={openLoginModal}
-        sx={{ ml: 1 }}
       >
         Login
       </Button>
@@ -219,29 +306,55 @@ export default function Navbar() {
   const drawerContent = (
     <Box sx={{ width: 280, pt: 2 }}>
       {/* Header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: 2, mb: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          px: 2,
+          mb: 2,
+        }}
+      >
         <Typography
           variant="h3"
-          sx={{ fontWeight: 700, color: 'secondary.main', cursor: 'pointer' }}
-          onClick={() => handleNavigate('/')}
+          sx={{ fontWeight: 700, color: "primary.main", cursor: "pointer" }}
+          onClick={() => handleNavigate("/")}
         >
-          🟢 Fixio
+          Fixio
         </Typography>
-        <IconButton onClick={() => setDrawerOpen(false)} aria-label="Tutup menu">
+        <IconButton
+          onClick={() => setDrawerOpen(false)}
+          aria-label="Tutup menu"
+        >
           <CloseIcon />
         </IconButton>
       </Box>
 
       <Divider />
 
-      {/* Nav links */}
-      <List>
-        {NAV_LINKS.map(({ label, path }) => (
-          <ListItemButton key={path} onClick={() => handleNavigate(path)}>
-            <ListItemText primary={label} />
-          </ListItemButton>
-        ))}
-      </List>
+      {/* Search in drawer */}
+      <Box sx={{ px: 2, py: 1.5 }}>
+        <Box
+          component="form"
+          onSubmit={handleSearch}
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            bgcolor: "background.default",
+            borderRadius: 20,
+            px: 1.5,
+            py: 0.5,
+          }}
+        >
+          <SearchIcon sx={{ color: "text.secondary", fontSize: 20, mr: 1 }} />
+          <InputBase
+            placeholder="Cari aspirasi..."
+            value={searchValue}
+            onChange={(e) => setSearchValue(e.target.value)}
+            sx={{ flex: 1, fontSize: "0.8125rem" }}
+          />
+        </Box>
+      </Box>
 
       <Divider />
 
@@ -257,17 +370,19 @@ export default function Navbar() {
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: 'background.paper',
-          borderBottom: '1px solid',
-          borderColor: 'divider',
+          bgcolor: "background.paper",
+          borderBottom: "1px solid",
+          borderColor: "divider",
         }}
       >
         <Toolbar
           sx={{
             maxWidth: 1200,
-            width: '100%',
-            mx: 'auto',
-            px: { xs: 2, md: 3 },
+            width: "100%",
+            mx: "auto",
+            px: { xs: 1.5, md: 2 },
+            minHeight: { xs: 48, md: 52 },
+            gap: 1,
           }}
         >
           {/* Logo */}
@@ -275,56 +390,143 @@ export default function Navbar() {
             variant="h3"
             sx={{
               fontWeight: 700,
-              color: 'secondary.main',
-              cursor: 'pointer',
-              mr: 4,
+              color: "primary.main",
+              cursor: "pointer",
+              mr: { xs: 1, md: 1.5 },
               flexShrink: 0,
+              fontSize: { xs: "1rem", md: "1.125rem" },
             }}
-            onClick={() => handleNavigate('/')}
+            onClick={() => handleNavigate("/")}
           >
-            🟢 Fixio
+            Fixio
           </Typography>
 
-          {/* Desktop nav links — hidden on mobile */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1 }}>
-            {NAV_LINKS.map(({ label, path }) => (
-              <Button
-                key={path}
-                onClick={() => handleNavigate(path)}
-                sx={{
-                  color: 'text.primary',
-                  fontWeight: 500,
-                  '&:hover': { bgcolor: 'action.hover' },
-                }}
-              >
-                {label}
-              </Button>
-            ))}
+          {/* Search bar — Quora prominent center */}
+          <Box
+            component="form"
+            onSubmit={handleSearch}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+              alignItems: "center",
+              flex: 1,
+              maxWidth: 540,
+              bgcolor: "background.default",
+              borderRadius: 20,
+              px: 2,
+              py: 0.5,
+              mx: { sm: 1, md: 2 },
+              transition: "box-shadow 0.15s ease",
+              "&:focus-within": {
+                boxShadow: (t) => `0 0 0 2px ${t.palette.primary.main}`,
+                bgcolor: "background.paper",
+              },
+            }}
+          >
+            <SearchIcon sx={{ color: "text.secondary", fontSize: 20, mr: 1 }} />
+            <InputBase
+              placeholder="Cari aspirasi..."
+              value={searchValue}
+              onChange={(e) => setSearchValue(e.target.value)}
+              sx={{ flex: 1, fontSize: "0.8125rem" }}
+            />
           </Box>
 
-          {/* Spacer */}
-          <Box sx={{ flexGrow: 1 }} />
+          {/* Desktop right side — icon nav + actions */}
+          <Box
+            sx={{
+              display: { xs: "none", md: "flex" },
+              alignItems: "center",
+              gap: 0.5,
+              ml: "auto",
+            }}
+          >
+            {/* Nav icon buttons */}
+            {NAV_ICONS.map(({ label, path, icon, activeIcon }) => {
+              const isActive = pathname === path;
+              return (
+                <IconButton
+                  key={path}
+                  onClick={() => handleNavigate(path)}
+                  aria-label={label}
+                  sx={{
+                    color: isActive ? "primary.main" : "text.secondary",
+                    borderBottom: isActive
+                      ? "2px solid"
+                      : "2px solid transparent",
+                    borderColor: isActive ? "primary.main" : "transparent",
+                    borderRadius: 0,
+                    px: 2,
+                    py: 1,
+                  }}
+                >
+                  {isActive ? activeIcon : icon}
+                </IconButton>
+              );
+            })}
 
-          {/* Desktop right side — hidden on mobile */}
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1 }}>
-            {/* Search icon */}
+            {/* Theme toggle */}
+            <ThemeToggle />
+
+            {/* Notification bell */}
             <IconButton
-              onClick={() => handleNavigate('/explore')}
-              sx={{ color: 'text.secondary' }}
-              aria-label="Cari"
+              sx={{
+                color:
+                  pathname === "/notifications"
+                    ? "primary.main"
+                    : "text.secondary",
+                borderBottom:
+                  pathname === "/notifications"
+                    ? "2px solid"
+                    : "2px solid transparent",
+                borderColor:
+                  pathname === "/notifications"
+                    ? "primary.main"
+                    : "transparent",
+                borderRadius: 0,
+                px: 2,
+                py: 1,
+              }}
+              aria-label="Notifikasi"
+              onClick={() => router.push("/notifications")}
             >
-              <SearchIcon />
+              <Badge
+                badgeContent={unreadCount}
+                color="error"
+                max={99}
+                sx={{
+                  "& .MuiBadge-badge": {
+                    top: 2,
+                    right: 2,
+                    fontSize: "0.625rem",
+                    height: 16,
+                    minWidth: 16,
+                  },
+                }}
+              >
+                <NotificationsNoneIcon />
+              </Badge>
             </IconButton>
 
             {renderDesktopAuth()}
           </Box>
 
-          {/* Mobile: hamburger — hidden on desktop */}
-          <Box sx={{ display: { xs: 'flex', md: 'none' } }}>
+          {/* Mobile: search icon + hamburger */}
+          <Box
+            sx={{
+              display: { xs: "flex", md: "none" },
+              alignItems: "center",
+              ml: "auto",
+              gap: 0.5,
+            }}
+          >
+            {/* Mobile theme toggle */}
+            <ThemeToggle />
+
             <IconButton
               onClick={() => setDrawerOpen(true)}
-              sx={{ color: 'text.primary' }}
+              sx={{ color: "text.primary" }}
               aria-label="Menu"
+              size="small"
             >
               <MenuIcon />
             </IconButton>

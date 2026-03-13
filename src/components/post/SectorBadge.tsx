@@ -55,14 +55,16 @@ export default function SectorBadge({ sector, size = 'small', onClick }: Readonl
       size={size}
       clickable={Boolean(onClick)}
       onClick={onClick}
+      variant="outlined"
       sx={{
-        bgcolor: color.bg,
+        bgcolor: 'transparent',
         color: color.text,
+        borderColor: color.bg,
         fontWeight: 600,
         letterSpacing: 0.2,
-        border: 'none',
+        fontSize: '0.7rem',
         '&:hover': onClick
-          ? { filter: 'brightness(0.95)' }
+          ? { bgcolor: color.bg, filter: 'brightness(0.95)' }
           : undefined,
       }}
     />

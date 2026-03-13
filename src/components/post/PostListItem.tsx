@@ -10,6 +10,7 @@ import ArrowDropUpIcon from '@mui/icons-material/ArrowDropUp';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
 import EditIcon from '@mui/icons-material/Edit';
 import { SectorBadge, StatusBadge } from '@/components/post';
+import { stripHtml } from '@/components/editor';
 import { formatLocalDate } from '@/lib/formatDate';
 import type { Post } from '@/types';
 
@@ -53,7 +54,7 @@ export default function PostListItem({
       sx={{
         borderBottom: '1px solid',
         borderBottomColor: 'divider',
-        bgcolor: isRejected ? '#FFF5F5' : 'transparent',
+        bgcolor: isRejected ? 'error.light' : 'transparent',
         py: 2,
         px: { xs: 0, sm: 1 },
       }}
@@ -75,35 +76,65 @@ export default function PostListItem({
           {showStatus && <StatusBadge status={post.status} />}
         </Stack>
 
-        {/* Title */}
-        <Typography
-          variant="body1"
-          fontWeight={600}
-          sx={{
-            display: '-webkit-box',
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            mb: 0.5,
-          }}
-        >
-          {post.title}
-        </Typography>
+        {/* Title row with optional thumbnail */}
+        <Stack direction="row" spacing={1.5} alignItems="flex-start">
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="body1"
+              fontWeight={600}
+              sx={{
+                display: '-webkit-box',
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                mb: 0.5,
+              }}
+            >
+              {post.title}
+            </Typography>
 
-        {/* Preview kritik */}
-        <Typography
-          variant="body2"
-          color="text.secondary"
-          sx={{
-            display: '-webkit-box',
-            WebkitLineClamp: 1,
-            WebkitBoxOrient: 'vertical',
-            overflow: 'hidden',
-            mb: 1,
-          }}
-        >
-          {post.criticism}
-        </Typography>
+            {/* Preview kritik */}
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                display: '-webkit-box',
+                WebkitLineClamp: 1,
+                WebkitBoxOrient: 'vertical',
+                overflow: 'hidden',
+                mb: 1,
+              }}
+            >
+              {stripHtml(post.criticism)}
+            </Typography>
+          </Box>
+
+          {/* Thumbnail */}
+          {post.images?.length > 0 && (
+            <Box
+              sx={{
+                flexShrink: 0,
+                width: 56,
+                height: 56,
+                borderRadius: 1,
+                overflow: 'hidden',
+              }}
+            >
+              <Box
+                component="img"
+                src={post.images[0]}
+                alt=""
+                loading="lazy"
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  display: 'block',
+                }}
+              />
+            </Box>
+          )}
+        </Stack>
 
         {/* Meta row */}
         <Stack direction="row" spacing={2} alignItems="center" sx={{ color: 'text.secondary' }}>
@@ -151,7 +182,7 @@ export default function PostListItem({
             startIcon={<EditIcon sx={{ fontSize: 14 }} />}
             onClick={(e) => {
               e.stopPropagation();
-              router.push(`/post/${post.id}`);
+              router.push(`/post/${post.id}/edit`);
             }}
             sx={{ textTransform: 'none', fontSize: '0.75rem' }}
           >

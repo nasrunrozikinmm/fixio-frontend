@@ -12,6 +12,7 @@ body {
 }
 
 body {
+  /* background-color managed by MUI CssBaseline via theme */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -19,4 +20,32 @@ body {
 a {
   color: inherit;
   text-decoration: none;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #c4c4c4;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #939598;
+}
+
+/* ── App main container ── */
+.app-main {
+  min-height: 100vh;
+  padding-bottom: 56px; /* mobile bottom nav spacing */
+}
+
+@media (min-width: 900px) {
+  .app-main {
+    padding-bottom: 0;
+    overflow: hidden;
+  }
 }

@@ -1,5 +1,5 @@
 import { baseApi } from './baseApi';
-import type { ApiResponse, User } from '@/types';
+import type { ApiResponse, User, UpdateProfileRequest } from '@/types';
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
@@ -7,6 +7,15 @@ export const authApi = baseApi.injectEndpoints({
       query: () => '/auth/me',
       transformResponse: (response: ApiResponse<User>) => response.data,
       providesTags: ['Auth'],
+    }),
+    updateProfile: builder.mutation<User, UpdateProfileRequest>({
+      query: (body) => ({
+        url: '/auth/me',
+        method: 'PUT',
+        body,
+      }),
+      transformResponse: (response: ApiResponse<User>) => response.data,
+      invalidatesTags: ['Auth'],
     }),
     logout: builder.mutation<void, void>({
       query: () => ({
@@ -18,4 +27,4 @@ export const authApi = baseApi.injectEndpoints({
   }),
 });
 
-export const { useGetMeQuery, useLogoutMutation } = authApi;
+export const { useGetMeQuery, useUpdateProfileMutation, useLogoutMutation } = authApi;

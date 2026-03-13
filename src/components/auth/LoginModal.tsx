@@ -115,7 +115,7 @@ export default function LoginModal() {
               borderRadius: "8px",
               "&:hover": {
                 borderColor: "text.secondary",
-                bgcolor: "rgba(0,0,0,0.02)",
+                bgcolor: "action.hover",
               },
             }}
           >

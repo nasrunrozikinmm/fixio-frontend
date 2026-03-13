@@ -1,7 +1,6 @@
 'use client';
 
 import { use, useState, useMemo, useCallback } from 'react';
-import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Tabs from '@mui/material/Tabs';
@@ -16,6 +15,9 @@ import { useGetPostsQuery } from '@/store/api/postApi';
 import { useAuth } from '@/hooks/useAuth';
 import ProfileHeader from '@/components/post/ProfileHeader';
 import PostListItem from '@/components/post/PostListItem';
+import ThreeColumnLayout from '@/components/layout/ThreeColumnLayout';
+import TrendingSidebar from '@/components/layout/TrendingSidebar';
+import SidebarAd from '@/components/layout/SidebarAd';
 
 // ────────────────────────────────────────────
 // Tab config
@@ -205,58 +207,64 @@ export default function UserProfilePage({ params }: UserProfilePageProps) {
   }, [profileUser, postCount]);
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 3, sm: 4 } }}>
-      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
-        {/* Loading */}
-        {isLoading && <ProfileSkeleton />}
+    <ThreeColumnLayout
+      centerMaxWidth={800}
+      rightSidebar={
+        <TrendingSidebar>
+          <SidebarAd />
+        </TrendingSidebar>
+      }
+    >
+      {/* Loading */}
+      {isLoading && <ProfileSkeleton />}
 
-        {/* Error */}
-        {isError && <ProfileError />}
+      {/* Error */}
+      {isError && <ProfileError />}
 
-        {/* Profile */}
-        {profileUser && (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-            {/* Header */}
-            <ProfileHeader
-              user={profileUser}
-              postCount={postCount}
-              totalVotes={totalVotes}
-              commentCount={0}
-            />
+      {/* Profile */}
+      {profileUser && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+          {/* Header */}
+          <ProfileHeader
+            user={profileUser}
+            postCount={postCount}
+            totalVotes={totalVotes}
+            commentCount={0}
+            isOwner={isOwner}
+          />
 
-            {/* Tabs */}
-            <Tabs
-              value={tabIndex}
-              onChange={handleTabChange}
-              sx={{
-                '& .MuiTabs-indicator': {
-                  bgcolor: 'secondary.main',
-                },
-                '& .Mui-selected': {
-                  color: 'secondary.main',
-                },
-              }}
-            >
-              {tabs.map((tab) => (
-                <Tab
-                  key={tab.label}
-                  label={tab.label}
-                  sx={{ textTransform: 'none', fontWeight: 600 }}
-                />
-              ))}
-            </Tabs>
+          {/* Tabs */}
+          <Tabs
+            value={tabIndex}
+            onChange={handleTabChange}
+            sx={{
+              '& .MuiTabs-indicator': {
+                bgcolor: 'secondary.main',
+              },
+              '& .Mui-selected': {
+                color: 'secondary.main',
+              },
+            }}
+          >
+            {tabs.map((tab) => (
+              <Tab
+                key={tab.label}
+                label={tab.label}
+                sx={{ textTransform: 'none', fontWeight: 600 }}
+              />
+            ))}
+          </Tabs>
 
-            {/* Post list */}
-            <PostListContent
-              userId={id}
-              status={currentStatus}
-              page={page}
-              isOwner={isOwner}
-              onPageChange={handlePageChange}
-            />
-          </Box>
-        )}
-      </Box>
-    </Container>
+          {/* Post list */}
+          <PostListContent
+            userId={id}
+            status={currentStatus}
+            page={page}
+            isOwner={isOwner}
+            onPageChange={handlePageChange}
+          />
+        </Box>
+      )}
+    </ThreeColumnLayout>
   );
 }

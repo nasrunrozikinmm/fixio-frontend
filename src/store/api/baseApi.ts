@@ -21,6 +21,9 @@ export const baseApi = createApi({
     'ModerationHistory',
     'AdminStats',
     'AdminUsers',
+    'Follows',
+    'Bookmarks',
+    'Notifications',
   ],
   endpoints: () => ({}),
 });

@@ -1,16 +1,41 @@
 import { z } from 'zod';
+import { stripHtmlLength } from '@/components/editor';
+
+// ────────────────────────────────────────────
+// Constants
+// ────────────────────────────────────────────
+
+/** Max raw HTML length for rich-text fields */
+const RICH_TEXT_MAX = 5_000;
+/** Min plain-text characters (after stripping HTML tags) */
+const RICH_TEXT_MIN_PLAIN = 50;
+
+// ────────────────────────────────────────────
+// Helpers
+// ────────────────────────────────────────────
+
+/** Zod refinement: validates minimum plain-text length for HTML content */
+function richTextMin(label: string) {
+  return (val: string, ctx: z.RefinementCtx) => {
+    if (stripHtmlLength(val) < RICH_TEXT_MIN_PLAIN) {
+      ctx.addIssue({
+        code: 'custom',
+        message: `${label} minimal ${RICH_TEXT_MIN_PLAIN} karakter (teks saja)`,
+      });
+    }
+  };
+}
+
+// ────────────────────────────────────────────
+// Schema
+// ────────────────────────────────────────────
 
 /**
  * Zod schema — validasi form "Buat Post".
  *
- * Sesuai brief-pixel spec:
- * - Judul: required, min 10, max 150
- * - Sektor: required
- * - Wilayah: required
- * - Kritik: required, min 50, max 1000
- * - Solusi: required, min 50, max 1000
- * - Estimasi Dampak: optional
- * - Referensi: optional
+ * Rich-text fields (criticism, solution) store HTML.
+ * Max is validated against raw HTML length; min is
+ * validated against stripped plain-text length.
  */
 export const postSchema = z.object({
   title: z
@@ -27,19 +52,22 @@ export const postSchema = z.object({
   criticism: z
     .string()
     .min(1, 'Kritik wajib diisi')
-    .min(50, 'Kritik minimal 50 karakter')
-    .max(1000, 'Kritik maksimal 1000 karakter'),
+    .max(RICH_TEXT_MAX, `Kritik maksimal ${RICH_TEXT_MAX} karakter`)
+    .superRefine(richTextMin('Kritik')),
   solution: z
     .string()
     .min(1, 'Solusi wajib diisi')
-    .min(50, 'Solusi minimal 50 karakter')
-    .max(1000, 'Solusi maksimal 1000 karakter'),
+    .max(RICH_TEXT_MAX, `Solusi maksimal ${RICH_TEXT_MAX} karakter`)
+    .superRefine(richTextMin('Solusi')),
   impact_estimate: z
     .string()
     .max(500, 'Estimasi dampak maksimal 500 karakter'),
   references: z
     .string()
     .max(500, 'Referensi maksimal 500 karakter'),
+  images: z
+    .array(z.string().url('URL gambar tidak valid'))
+    .max(5, 'Maksimal 5 gambar'),
 });
 
 export type PostFormData = z.infer<typeof postSchema>;

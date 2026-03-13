@@ -96,15 +96,15 @@ export default function CommentItem({
             <Avatar
               src={comment.user.avatar_url}
               alt={comment.user.name}
-              sx={{ width: 24, height: 24, fontSize: '0.7rem' }}
+              sx={{ width: 28, height: 28, fontSize: '0.7rem' }}
             >
               {comment.user.name?.charAt(0).toUpperCase()}
             </Avatar>
           )}
-          <Typography variant="body2" fontWeight={600}>
+          <Typography variant="body2" fontWeight={600} sx={{ fontSize: '0.8125rem' }}>
             {comment.user?.name ?? 'Anonim'}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
             · {formatRelativeDate(comment.created_at)}
           </Typography>
         </Stack>

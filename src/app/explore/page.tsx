@@ -3,9 +3,7 @@
 import { Suspense, useState, useCallback, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Box from '@mui/material/Box';
-import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import Grid from '@mui/material/Grid';
 import Pagination from '@mui/material/Pagination';
 import Alert from '@mui/material/Alert';
 import Fade from '@mui/material/Fade';
@@ -19,6 +17,9 @@ import { useGetSectorsQuery } from '@/store/api/sectorApi';
 import { useGetRegionsQuery } from '@/store/api/regionApi';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { Post } from '@/types';
+import ThreeColumnLayout from '@/components/layout/ThreeColumnLayout';
+import TrendingSidebar from '@/components/layout/TrendingSidebar';
+import SidebarAd from '@/components/layout/SidebarAd';
 
 // ────────────────────────────────────────────
 // Constants
@@ -65,7 +66,13 @@ import Skeleton from '@mui/material/Skeleton';
 
 function ExploreLoadingFallback() {
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+    <ThreeColumnLayout
+      rightSidebar={
+        <TrendingSidebar>
+          <SidebarAd />
+        </TrendingSidebar>
+      }
+    >
       <Skeleton variant="text" width={220} height={36} sx={{ mb: 3 }} />
       <Skeleton variant="rounded" height={48} sx={{ mb: 2 }} />
       <Stack direction="row" spacing={1.5} sx={{ mb: 3 }}>
@@ -73,14 +80,12 @@ function ExploreLoadingFallback() {
         <Skeleton variant="rounded" width={160} height={40} />
         <Skeleton variant="rounded" width={150} height={40} />
       </Stack>
-      <Grid container spacing={2}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Grid key={`fallback-${i.toString()}`} size={{ xs: 12, md: 6 }}>
-            <PostCardSkeleton variant="feed" />
-          </Grid>
+      <Stack spacing={1.5}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <PostCardSkeleton key={`fallback-${i.toString()}`} variant="feed" />
         ))}
-      </Grid>
-    </Container>
+      </Stack>
+    </ThreeColumnLayout>
   );
 }
 
@@ -199,12 +204,18 @@ function ExploreContent() {
   const clearSort = useCallback(() => { setSortKey('latest'); resetPage(); }, []);
 
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 3, md: 4 } }}>
+    <ThreeColumnLayout
+      rightSidebar={
+        <TrendingSidebar>
+          <SidebarAd />
+        </TrendingSidebar>
+      }
+    >
       {/* ── Header ── */}
       <Typography
-        variant="h1"
+        variant="h2"
         component="h1"
-        sx={{ mb: 3, fontSize: { xs: '1.5rem', md: '1.75rem' } }}
+        sx={{ mb: 2, fontSize: { xs: '1.25rem', md: '1.375rem' }, fontWeight: 700 }}
       >
         Explore Aspirasi
       </Typography>
@@ -257,7 +268,7 @@ function ExploreContent() {
           />
         </Box>
       )}
-    </Container>
+    </ThreeColumnLayout>
   );
 }
 
@@ -275,13 +286,11 @@ interface ExploreResultsProps {
 function ExploreResults({ isLoading, isError, isFetching, posts }: Readonly<ExploreResultsProps>) {
   if (isLoading) {
     return (
-      <Grid container spacing={2}>
-        {Array.from({ length: 6 }).map((_, i) => (
-          <Grid key={`skeleton-${i.toString()}`} size={{ xs: 12, md: 6 }}>
-            <PostCardSkeleton variant="feed" />
-          </Grid>
+      <Stack spacing={1.5}>
+        {Array.from({ length: 4 }).map((_, i) => (
+          <PostCardSkeleton key={`skeleton-${i.toString()}`} variant="feed" />
         ))}
-      </Grid>
+      </Stack>
     );
   }
 
@@ -309,13 +318,11 @@ function ExploreResults({ isLoading, isError, isFetching, posts }: Readonly<Expl
 
   return (
     <Fade in={!isFetching} timeout={300}>
-      <Grid container spacing={2} sx={{ opacity: isFetching ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+      <Stack spacing={1.5} sx={{ opacity: isFetching ? 0.6 : 1, transition: 'opacity 0.2s' }}>
         {posts.map((post) => (
-          <Grid key={post.id} size={{ xs: 12, md: 6 }}>
-            <PostCard post={post} variant="feed" />
-          </Grid>
+          <PostCard key={post.id} post={post} variant="feed" />
         ))}
-      </Grid>
+      </Stack>
     </Fade>
   );
 }

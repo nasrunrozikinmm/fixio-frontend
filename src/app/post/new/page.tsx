@@ -2,37 +2,27 @@
 
 import { useState, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 import Alert from '@mui/material/Alert';
 import Stack from '@mui/material/Stack';
 import Snackbar from '@mui/material/Snackbar';
 import CircularProgress from '@mui/material/CircularProgress';
-import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import SaveOutlinedIcon from '@mui/icons-material/SaveOutlined';
 import AuthGuard from '@/components/auth/AuthGuard';
+import PostFormFields from '@/components/post/PostFormFields';
 import { useGetSectorsQuery } from '@/store/api/sectorApi';
 import { useGetRegionsQuery } from '@/store/api/regionApi';
 import { useCreatePostMutation } from '@/store/api/postApi';
 import { postSchema, type PostFormData } from '@/schemas/postSchema';
-import type { Sector, Region } from '@/types';
 import { PostPreviewModal } from '@/components/post';
+import ThreeColumnLayout from '@/components/layout/ThreeColumnLayout';
+import WritingGuide from '@/components/layout/WritingGuide';
 
-
-// ────────────────────────────────────────────
-// Char counter helper
-// ────────────────────────────────────────────
-
-function charCounter(current: number, max: number) {
-  return `${current}/${max}`;
-}
 
 // ────────────────────────────────────────────
 // Form component
@@ -67,6 +57,7 @@ function CreatePostForm() {
       solution: '',
       impact_estimate: '',
       references: '',
+      images: [],
     },
   });
 
@@ -130,192 +121,43 @@ function CreatePostForm() {
 
   return (
     <>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* ── Info banner ── */}
-        <Alert
-          severity="info"
-          icon={<InfoOutlinedIcon />}
-          sx={{ borderRadius: 2 }}
+      <PostFormFields
+        control={control}
+        errors={errors}
+        watch={watch}
+        sectors={sectors}
+        sectorsLoading={sectorsLoading}
+        regions={regions}
+        regionsLoading={regionsLoading}
+      />
+
+      {/* ── Action buttons ── */}
+      <Stack direction="row" spacing={2} justifyContent="flex-end" sx={{ mt: 3 }}>
+        <Button
+          variant="outlined"
+          startIcon={
+            isSavingDraft ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : (
+              <SaveOutlinedIcon />
+            )
+          }
+          disabled={isSavingDraft}
+          onClick={handleSaveDraft}
+          sx={{ textTransform: 'none' }}
         >
-          Post akan di-review moderator sebelum ditampilkan ke publik.
-        </Alert>
-
-        {/* ── Judul ── */}
-        <Controller
-          name="title"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label="Judul"
-              placeholder="Judul aspirasi Anda (min. 10 karakter)"
-              fullWidth
-              error={Boolean(errors.title)}
-              helperText={errors.title?.message ?? charCounter(field.value.length, 150)}
-              slotProps={{ htmlInput: { maxLength: 150 } }}
-            />
-          )}
-        />
-
-        {/* ── Sektor + Wilayah (side by side) ── */}
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-          <Controller
-            name="sector_id"
-            control={control}
-            render={({ field }) => (
-              <Autocomplete<Sector, false>
-                options={sectors}
-                getOptionLabel={(option) => option.name}
-                loading={sectorsLoading}
-                value={selectedSector}
-                onChange={(_e, newValue) => {
-                  field.onChange(newValue?.id ?? '');
-                }}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                fullWidth
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Sektor"
-                    placeholder="Pilih sektor"
-                    error={Boolean(errors.sector_id)}
-                    helperText={errors.sector_id?.message}
-                  />
-                )}
-              />
-            )}
-          />
-
-          <Controller
-            name="region_id"
-            control={control}
-            render={({ field }) => (
-              <Autocomplete<Region, false>
-                options={regions}
-                getOptionLabel={(option) => option.name}
-                loading={regionsLoading}
-                value={selectedRegion}
-                onChange={(_e, newValue) => {
-                  field.onChange(newValue?.id ?? '');
-                }}
-                isOptionEqualToValue={(option, value) => option.id === value.id}
-                fullWidth
-                renderInput={(params) => (
-                  <TextField
-                    {...params}
-                    label="Wilayah"
-                    placeholder="Pilih wilayah"
-                    error={Boolean(errors.region_id)}
-                    helperText={errors.region_id?.message}
-                  />
-                )}
-              />
-            )}
-          />
-        </Stack>
-
-        {/* ── Kritik ── */}
-        <Controller
-          name="criticism"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label="Kritik"
-              placeholder="Jelaskan permasalahan kebijakan yang ingin Anda kritisi (min. 50 karakter)"
-              fullWidth
-              multiline
-              minRows={4}
-              error={Boolean(errors.criticism)}
-              helperText={errors.criticism?.message ?? charCounter(field.value.length, 1000)}
-              slotProps={{ htmlInput: { maxLength: 1000 } }}
-            />
-          )}
-        />
-
-        {/* ── Solusi ── */}
-        <Controller
-          name="solution"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label="Solusi"
-              placeholder="Berikan solusi konkret untuk permasalahan di atas (min. 50 karakter)"
-              fullWidth
-              multiline
-              minRows={4}
-              error={Boolean(errors.solution)}
-              helperText={errors.solution?.message ?? charCounter(field.value.length, 1000)}
-              slotProps={{ htmlInput: { maxLength: 1000 } }}
-            />
-          )}
-        />
-
-        {/* ── Estimasi Dampak (opsional) ── */}
-        <Controller
-          name="impact_estimate"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label="Estimasi Dampak (opsional)"
-              placeholder="Perkiraan dampak positif dari solusi yang diusulkan"
-              fullWidth
-              multiline
-              minRows={2}
-              error={Boolean(errors.impact_estimate)}
-              helperText={errors.impact_estimate?.message ?? charCounter(field.value?.length ?? 0, 500)}
-              slotProps={{ htmlInput: { maxLength: 500 } }}
-            />
-          )}
-        />
-
-        {/* ── Referensi (opsional) ── */}
-        <Controller
-          name="references"
-          control={control}
-          render={({ field }) => (
-            <TextField
-              {...field}
-              label="Referensi (opsional)"
-              placeholder="Link sumber data atau artikel pendukung"
-              fullWidth
-              error={Boolean(errors.references)}
-              helperText={errors.references?.message ?? charCounter(field.value?.length ?? 0, 500)}
-              slotProps={{ htmlInput: { maxLength: 500 } }}
-            />
-          )}
-        />
-
-        {/* ── Action buttons ── */}
-        <Stack direction="row" spacing={2} justifyContent="flex-end">
-          <Button
-            variant="outlined"
-            startIcon={
-              isSavingDraft ? (
-                <CircularProgress size={16} color="inherit" />
-              ) : (
-                <SaveOutlinedIcon />
-              )
-            }
-            disabled={isSavingDraft}
-            onClick={handleSaveDraft}
-            sx={{ textTransform: 'none' }}
-          >
-            Simpan Draft
-          </Button>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<VisibilityIcon />}
-            onClick={handlePreview}
-            sx={{ textTransform: 'none', fontWeight: 600 }}
-          >
-            Preview &amp; Submit
-          </Button>
-        </Stack>
-      </Box>
+          Simpan Draft
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          startIcon={<VisibilityIcon />}
+          onClick={handlePreview}
+          sx={{ textTransform: 'none', fontWeight: 600 }}
+        >
+          Preview &amp; Submit
+        </Button>
+      </Stack>
 
       {/* ── Preview modal ── */}
       <PostPreviewModal
@@ -353,14 +195,12 @@ function CreatePostForm() {
 export default function CreatePostPage() {
   return (
     <AuthGuard>
-      <Container maxWidth="md" sx={{ py: { xs: 3, sm: 4 } }}>
-        <Box sx={{ maxWidth: 720, mx: 'auto' }}>
-          <Typography variant="h1" sx={{ mb: 3 }}>
-            Buat Aspirasi Baru
-          </Typography>
-          <CreatePostForm />
-        </Box>
-      </Container>
+      <ThreeColumnLayout centerMaxWidth={720} rightSidebar={<WritingGuide />}>
+        <Typography variant="h1" sx={{ mb: 3 }}>
+          Buat Aspirasi Baru
+        </Typography>
+        <CreatePostForm />
+      </ThreeColumnLayout>
     </AuthGuard>
   );
 }

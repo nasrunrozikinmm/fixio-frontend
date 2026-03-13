@@ -1,25 +1,36 @@
 'use client';
 
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Tabs from '@mui/material/Tabs';
 import Tab from '@mui/material/Tab';
 import Stack from '@mui/material/Stack';
 import Typography from '@mui/material/Typography';
-import Pagination from '@mui/material/Pagination';
 import Alert from '@mui/material/Alert';
 import Fade from '@mui/material/Fade';
+import CircularProgress from '@mui/material/CircularProgress';
 import { PostCard, PostCardSkeleton } from '@/components/post';
-import { useGetPostsQuery, SORT_OPTIONS } from '@/store/api/postApi';
+import { useGetPostsQuery, useGetFollowingFeedQuery, SORT_OPTIONS } from '@/store/api/postApi';
 import type { SortKey } from '@/store/api/postApi';
+import { useAuth } from '@/hooks/useAuth';
 
 // ────────────────────────────────────────────
 // Constants
 // ────────────────────────────────────────────
 
-const TABS: { label: string; sortKey: SortKey }[] = [
-  { label: 'Terbaru', sortKey: 'latest' },
-  { label: 'Populer', sortKey: 'popular' },
+type TabType = 'latest' | 'popular' | 'following';
+
+interface TabDef {
+  label: string;
+  type: TabType;
+  sortKey?: SortKey;
+  authRequired?: boolean;
+}
+
+const TABS: TabDef[] = [
+  { label: 'Terbaru', type: 'latest', sortKey: 'latest' },
+  { label: 'Populer', type: 'popular', sortKey: 'popular' },
+  { label: 'Mengikuti', type: 'following', authRequired: true },
 ];
 
 const PAGE_SIZE = 10;
@@ -29,7 +40,6 @@ const PAGE_SIZE = 10;
 // ────────────────────────────────────────────
 
 interface PostFeedProps {
-  /** Optional sector_id filter from sidebar */
   sectorId?: string;
 }
 
@@ -38,107 +48,156 @@ interface PostFeedProps {
 // ────────────────────────────────────────────
 
 /**
- * PostFeed — Tabbed post list with "Terbaru" / "Populer" sort + pagination.
+ * PostFeed — Tabbed post list with infinite scroll (Quora-style).
  *
- * Sesuai brief-pixel.md:
- * - 2 tabs: "Terbaru" (sort=created_at desc) | "Populer" (sort=vote_count desc)
- * - Skeleton while loading (not a spinner)
- * - Numbered pagination (MUI Pagination)
- * - Accepts external sectorId filter prop from SectorFilterSidebar
+ * - 3 tabs: "Terbaru" | "Populer" | "Mengikuti"
+ * - IntersectionObserver-based infinite scroll
+ * - Skeleton on initial load, spinner on load-more
  */
 export default function PostFeed({ sectorId }: Readonly<PostFeedProps>) {
+  const { user } = useAuth();
   const [tabIndex, setTabIndex] = useState(0);
   const [page, setPage] = useState(1);
 
-  // Reset page when sector filter changes (React recommended pattern:
-  // adjusting state during render, not in useEffect)
-  // See: https://react.dev/learn/you-might-not-need-an-effect#adjusting-some-state-when-a-prop-changes
+  // Accumulated posts for infinite scroll
+  const [accumulatedPosts, setAccumulatedPosts] = useState<import('@/types').Post[]>([]);
+
+  // Reset when sector or tab changes
   const [prevSectorId, setPrevSectorId] = useState(sectorId);
+  const [prevTabIndex, setPrevTabIndex] = useState(tabIndex);
   if (prevSectorId !== sectorId) {
     setPrevSectorId(sectorId);
     setPage(1);
+    setAccumulatedPosts([]);
+  }
+  if (prevTabIndex !== tabIndex) {
+    setPrevTabIndex(tabIndex);
+    setPage(1);
+    setAccumulatedPosts([]);
   }
 
-  const currentSortKey = TABS[tabIndex].sortKey;
+  const visibleTabs = useMemo(
+    () => TABS.filter((t) => !t.authRequired || !!user),
+    [user],
+  );
 
-  // Build query params — memoized to avoid unnecessary re-renders
+  const currentTab = visibleTabs[tabIndex] ?? visibleTabs[0];
+  const isFollowingTab = currentTab.type === 'following';
+
   const queryParams = useMemo(() => ({
     page,
     limit: PAGE_SIZE,
-    sort: SORT_OPTIONS[currentSortKey],
+    sort: currentTab.sortKey ? SORT_OPTIONS[currentTab.sortKey] : undefined,
     ...(sectorId ? { sector_id: sectorId } : {}),
-  }), [page, currentSortKey, sectorId]);
+  }), [page, currentTab.sortKey, sectorId]);
 
-  const { data, isLoading, isFetching, isError } = useGetPostsQuery(queryParams);
+  const regularQuery = useGetPostsQuery(queryParams, { skip: isFollowingTab });
+  const followingQuery = useGetFollowingFeedQuery(
+    { page, limit: PAGE_SIZE },
+    { skip: !isFollowingTab },
+  );
 
-  const posts = data?.data ?? [];
-  const pagination = data?.pagination;
+  const activeQuery = isFollowingTab ? followingQuery : regularQuery;
+  const newPosts = activeQuery.data?.data ?? [];
+  const pagination = activeQuery.data?.pagination;
   const totalPages = pagination?.total_pages ?? 1;
+  const hasMore = page < totalPages;
+
+  // Accumulate posts when new data arrives
+  const [lastMergedPage, setLastMergedPage] = useState(0);
+  useEffect(() => {
+    if (newPosts.length > 0 && page !== lastMergedPage && !activeQuery.isFetching) {
+      setAccumulatedPosts((prev) => {
+        if (page === 1) return newPosts;
+        // Deduplicate by id
+        const existingIds = new Set(prev.map((p) => p.id));
+        const unique = newPosts.filter((p) => !existingIds.has(p.id));
+        return [...prev, ...unique];
+      });
+      setLastMergedPage(page);
+    }
+  }, [newPosts, page, lastMergedPage, activeQuery.isFetching]);
+
+  // IntersectionObserver sentinel
+  const sentinelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore && !activeQuery.isFetching) {
+          setPage((prev) => prev + 1);
+        }
+      },
+      { rootMargin: '200px' },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [hasMore, activeQuery.isFetching]);
 
   const handleTabChange = useCallback((_: React.SyntheticEvent, newValue: number) => {
     setTabIndex(newValue);
-    setPage(1); // Reset to first page when switching tabs
   }, []);
 
-  const handlePageChange = useCallback((_: React.ChangeEvent<unknown>, newPage: number) => {
-    setPage(newPage);
-    // Scroll to top of feed
-    const feedEl = document.getElementById('post-feed');
-    if (feedEl) {
-      feedEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, []);
+  // Use accumulated or first-page data
+  const displayPosts = accumulatedPosts.length > 0 ? accumulatedPosts : newPosts;
 
   return (
     <Box id="post-feed">
-      {/* ── Sort Tabs ── */}
+      {/* ── Tabs ── */}
       <Tabs
         value={tabIndex}
         onChange={handleTabChange}
         sx={{
-          mb: 2.5,
+          mb: 2,
           '& .MuiTabs-indicator': {
-            height: 3,
-            borderRadius: '3px 3px 0 0',
+            height: 2,
+            borderRadius: '2px 2px 0 0',
           },
         }}
       >
-        {TABS.map((tab) => (
+        {visibleTabs.map((tab) => (
           <Tab
-            key={tab.sortKey}
+            key={tab.type}
             label={tab.label}
-            sx={{ minWidth: 'auto', px: 2 }}
+            sx={{ minWidth: 'auto', px: 2, fontSize: '0.8125rem', textTransform: 'none' }}
           />
         ))}
       </Tabs>
 
-      {/* ── Post List ── */}
+      {/* ── Content ── */}
       <FeedContent
-        isLoading={isLoading}
-        isError={isError}
-        isFetching={isFetching}
-        posts={posts}
+        isLoading={activeQuery.isLoading && page === 1}
+        isError={activeQuery.isError}
+        isFetching={activeQuery.isFetching && page === 1}
+        posts={displayPosts}
+        isFollowingTab={isFollowingTab}
       />
 
-      {/* ── Pagination ── */}
-      {totalPages > 1 && !isLoading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={handlePageChange}
-            color="primary"
-            shape="rounded"
-            disabled={isFetching}
-          />
+      {/* ── Load more indicator ── */}
+      {activeQuery.isFetching && page > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+          <CircularProgress size={28} sx={{ color: 'text.secondary' }} />
         </Box>
       )}
+
+      {/* ── End of feed ── */}
+      {!hasMore && displayPosts.length > 0 && !activeQuery.isLoading && (
+        <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', py: 3 }}>
+          Tidak ada post lagi.
+        </Typography>
+      )}
+
+      {/* ── Infinite scroll sentinel ── */}
+      <div ref={sentinelRef} style={{ height: 1 }} />
     </Box>
   );
 }
 
 // ────────────────────────────────────────────
-// Sub-component — extracted to avoid nested ternaries (SonarQube S3358)
+// Sub-component
 // ────────────────────────────────────────────
 
 import type { Post } from '@/types';
@@ -148,9 +207,10 @@ interface FeedContentProps {
   isError: boolean;
   isFetching: boolean;
   posts: Post[];
+  isFollowingTab?: boolean;
 }
 
-function FeedContent({ isLoading, isError, isFetching, posts }: Readonly<FeedContentProps>) {
+function FeedContent({ isLoading, isError, isFetching, posts, isFollowingTab }: Readonly<FeedContentProps>) {
   if (isLoading) {
     return (
       <Stack spacing={2}>
@@ -172,11 +232,15 @@ function FeedContent({ isLoading, isError, isFetching, posts }: Readonly<FeedCon
   if (posts.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 6 }}>
-        <Typography variant="body1" color="text.secondary">
-          Belum ada post yang tersedia.
+        <Typography variant="body2" color="text.secondary">
+          {isFollowingTab
+            ? 'Belum ada post dari orang yang Anda ikuti.'
+            : 'Belum ada post yang tersedia.'}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-          Jadilah yang pertama menyampaikan kritik &amp; solusi!
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+          {isFollowingTab
+            ? 'Ikuti pengguna lain untuk melihat post mereka di sini.'
+            : 'Jadilah yang pertama menyampaikan kritik & solusi!'}
         </Typography>
       </Box>
     );
@@ -184,7 +248,7 @@ function FeedContent({ isLoading, isError, isFetching, posts }: Readonly<FeedCon
 
   return (
     <Fade in={!isFetching} timeout={300}>
-      <Stack spacing={2} sx={{ opacity: isFetching ? 0.6 : 1, transition: 'opacity 0.2s' }}>
+      <Stack spacing={1.5} sx={{ opacity: isFetching ? 0.6 : 1, transition: 'opacity 0.2s' }}>
         {posts.map((post) => (
           <PostCard key={post.id} post={post} variant="feed" />
         ))}

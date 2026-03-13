@@ -46,6 +46,9 @@ const authSlice = createSlice({
         state.user = null;
         state.isAuthenticated = false;
         state.loading = false;
+      })
+      .addMatcher(authApi.endpoints.updateProfile.matchFulfilled, (state, action) => {
+        state.user = action.payload;
       });
   },
 });

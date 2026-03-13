@@ -7,51 +7,51 @@ import Stack from '@mui/material/Stack';
 import Box from '@mui/material/Box';
 
 interface PostCardSkeletonProps {
-  /**
-   * Variant matching PostCard:
-   * - "feed": dengan preview kritik skeleton (4 baris total).
-   * - "compact": tanpa preview (2 baris utama).
-   */
   variant?: 'feed' | 'compact';
 }
 
 /**
- * PostCardSkeleton — Loading placeholder yang mirrors PostCard layout.
- *
- * Reusable: Home feed, Explore results, Profile post list, Moderation queue.
- * Sesuai requirement: "Gunakan MUI Skeleton (bukan spinner)".
+ * PostCardSkeleton — Quora-style loading placeholder matching PostCard layout.
  */
 export default function PostCardSkeleton({ variant = 'feed' }: Readonly<PostCardSkeletonProps>) {
   return (
     <Card>
-      <CardContent sx={{ p: { xs: 2, sm: 2.5 } }}>
-        {/* Badges skeleton */}
-        <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
-          <Skeleton variant="rounded" width={80} height={24} sx={{ borderRadius: 0.5 }} />
-          <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: 0.5 }} />
+      <CardContent sx={{ p: { xs: 2, sm: 2.5 }, '&:last-child': { pb: { xs: 1.5, sm: 2 } } }}>
+        {/* Author row */}
+        <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.25 }}>
+          <Skeleton variant="circular" width={32} height={32} />
+          <Box>
+            <Skeleton variant="text" width={120} height={16} />
+            <Skeleton variant="text" width={80} height={12} />
+          </Box>
         </Stack>
 
-        {/* Title skeleton — 2 baris */}
-        <Skeleton variant="text" width="90%" height={22} sx={{ mb: 0.5 }} />
-        <Skeleton variant="text" width="60%" height={22} sx={{ mb: variant === 'feed' ? 1 : 1.5 }} />
+        {/* Badges */}
+        <Stack direction="row" spacing={0.75} sx={{ mb: 1 }}>
+          <Skeleton variant="rounded" width={70} height={22} sx={{ borderRadius: 10 }} />
+          <Skeleton variant="rounded" width={90} height={22} sx={{ borderRadius: 10 }} />
+        </Stack>
 
-        {/* Preview kritik skeleton (hanya feed) */}
+        {/* Title */}
+        <Skeleton variant="text" width="90%" height={20} sx={{ mb: 0.5 }} />
+        <Skeleton variant="text" width="55%" height={20} sx={{ mb: variant === 'feed' ? 0.75 : 1 }} />
+
+        {/* Preview (feed only) */}
         {variant === 'feed' && (
-          <Box sx={{ mb: 2 }}>
-            <Skeleton variant="text" width="100%" height={18} />
-            <Skeleton variant="text" width="75%" height={18} />
+          <Box sx={{ mb: 1.5 }}>
+            <Skeleton variant="text" width="100%" height={16} />
+            <Skeleton variant="text" width="85%" height={16} />
+            <Skeleton variant="text" width="40%" height={16} />
           </Box>
         )}
 
-        {/* Meta row skeleton */}
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Skeleton variant="rounded" width={40} height={18} sx={{ borderRadius: 0.5 }} />
-          <Skeleton variant="rounded" width={32} height={18} sx={{ borderRadius: 0.5 }} />
+        {/* Action bar */}
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Skeleton variant="rounded" width={80} height={22} sx={{ borderRadius: 10 }} />
+          <Skeleton variant="rounded" width={40} height={22} sx={{ borderRadius: 10 }} />
           <Box sx={{ flexGrow: 1 }} />
-          <Stack direction="row" spacing={0.75} alignItems="center">
-            <Skeleton variant="circular" width={24} height={24} />
-            <Skeleton variant="text" width={80} height={16} />
-          </Stack>
+          <Skeleton variant="circular" width={20} height={20} />
+          <Skeleton variant="circular" width={20} height={20} />
         </Stack>
       </CardContent>
     </Card>

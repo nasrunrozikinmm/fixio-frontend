@@ -18,6 +18,12 @@ export interface User {
   updated_at: string;
 }
 
+export interface UpdateProfileRequest {
+  name?: string;
+  bio?: string;
+  location?: string;
+}
+
 // ============================================================
 // Post
 // ============================================================
@@ -33,6 +39,7 @@ export interface Post {
   solution: string;
   impact_estimate: string;
   references: string;
+  images: string[];
   status: PostStatus;
   reviewed_by: string | null;
   review_note: string;
@@ -131,4 +138,59 @@ export interface AdminStats {
   total_rejected: number;
   total_comments: number;
   total_votes: number;
+}
+
+// ============================================================
+// Follow
+// ============================================================
+export interface Follow {
+  id: string;
+  follower_id: string;
+  following_id: string;
+  created_at: string;
+}
+
+export interface FollowCounts {
+  follower_count: number;
+  following_count: number;
+}
+
+// ============================================================
+// Bookmark
+// ============================================================
+export interface Bookmark {
+  id: string;
+  post_id: string;
+  created_at: string;
+}
+
+export interface BookmarkListResponse {
+  posts: Post[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
+// ============================================================
+// Notification
+// ============================================================
+export type NotificationType = 'new_follower' | 'post_vote' | 'post_comment';
+
+export interface Notification {
+  id: string;
+  user_id: string;
+  type: NotificationType;
+  actor_id: string;
+  reference_id: string;
+  reference_type: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
+export interface NotificationListResponse {
+  notifications: Notification[];
+  total: number;
+  page: number;
+  limit: number;
 }

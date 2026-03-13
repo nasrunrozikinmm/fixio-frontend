@@ -4,6 +4,8 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Link from '@mui/material/Link';
 import type { Post } from '@/types';
+import { RichTextContent } from '@/components/editor';
+import ImageGallery from './ImageGallery';
 
 // ────────────────────────────────────────────
 // Section box reusable — Kritik (navy) / Solusi (hijau)
@@ -55,17 +57,7 @@ function ContentSection({
 
       {/* Body */}
       <Box sx={{ px: 2.5, py: 2 }}>
-        <Typography
-          variant="body1"
-          sx={{
-            whiteSpace: 'pre-wrap',
-            wordBreak: 'break-word',
-            lineHeight: 1.8,
-            color: 'text.primary',
-          }}
-        >
-          {children}
-        </Typography>
+        {children}
       </Box>
     </Box>
   );
@@ -92,27 +84,33 @@ interface PostDetailContentProps {
 export default function PostDetailContent({ post }: Readonly<PostDetailContentProps>) {
   const hasImpact = Boolean(post.impact_estimate?.trim());
   const hasReferences = Boolean(post.references?.trim());
+  const hasImages = post.images?.length > 0;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+      {/* ── Images ── */}
+      {hasImages && (
+        <ImageGallery images={post.images} variant="detail" />
+      )}
+
       {/* ── Kritik ── */}
       <ContentSection
         icon="📌"
         label="Kritik"
-        headerBg="#1B3A5C"
-        headerText="#FFFFFF"
+        headerBg="primary.main"
+        headerText="primary.contrastText"
       >
-        {post.criticism}
+        <RichTextContent html={post.criticism} />
       </ContentSection>
 
       {/* ── Solusi ── */}
       <ContentSection
         icon="💡"
         label="Solusi"
-        headerBg="#2E7D4F"
-        headerText="#FFFFFF"
+        headerBg="secondary.main"
+        headerText="secondary.contrastText"
       >
-        {post.solution}
+        <RichTextContent html={post.solution} />
       </ContentSection>
 
       {/* ── Estimasi Dampak (opsional) ── */}

@@ -36,7 +36,13 @@ export default function ModeratorPage() {
 
   return (
     <AuthGuard>
-      <Box sx={{ display: 'flex', minHeight: 'calc(100vh - 64px)' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          height: { xs: 'auto', md: 'calc(100vh - 52px)' },
+          minHeight: { xs: 'calc(100vh - 48px)' },
+        }}
+      >
         <DashboardSidebar
           title="Moderasi"
           items={MODERATOR_MENU}
@@ -52,6 +58,9 @@ export default function ModeratorPage() {
             flexGrow: 1,
             p: { xs: 2, sm: 3 },
             width: { md: `calc(100% - ${DRAWER_WIDTH}px)` },
+            overflowY: { md: 'auto' },
+            scrollbarWidth: 'none',
+            '&::-webkit-scrollbar': { width: 0 },
           }}
         >
           {/* Mobile menu toggle */}

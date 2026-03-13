@@ -1,16 +1,9 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
   IconButton,
   Tooltip,
   Button,
@@ -25,6 +18,7 @@ import {
   Skeleton,
   Chip,
 } from '@mui/material';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/EditOutlined';
 import DeleteIcon from '@mui/icons-material/DeleteOutline';
@@ -37,7 +31,7 @@ import {
 import type { Sector } from '@/types';
 
 /**
- * SectorManager — CRUD sektor via modal + confirm delete.
+ * SectorManager — CRUD sektor via DataGrid + modal + confirm delete.
  */
 export default function SectorManager() {
   // Form dialog state
@@ -63,6 +57,12 @@ export default function SectorManager() {
   const [deleteSector, { isLoading: deleting }] = useDeleteSectorMutation();
 
   const isMutating = creating || updating || deleting;
+
+  // Rows with index
+  const rows = useMemo(
+    () => (sectors ?? []).map((s, idx) => ({ ...s, rowNo: idx + 1 })),
+    [sectors],
+  );
 
   const openCreate = () => {
     setEditSector(null);
@@ -110,6 +110,64 @@ export default function SectorManager() {
     }
   }, [deleteTarget, deleteSector]);
 
+  const columns: GridColDef[] = useMemo(
+    () => [
+      {
+        field: 'rowNo',
+        headerName: 'No',
+        width: 60,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+      },
+      {
+        field: 'name',
+        headerName: 'Nama',
+        flex: 1,
+        minWidth: 180,
+        renderCell: (params: GridRenderCellParams) => (
+          <Typography variant="body2" fontWeight={500} sx={{ lineHeight: '52px' }}>
+            {params.value}
+          </Typography>
+        ),
+      },
+      {
+        field: 'slug',
+        headerName: 'Slug',
+        flex: 1,
+        minWidth: 150,
+        renderCell: (params: GridRenderCellParams) => (
+          <Chip label={params.value} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
+        ),
+      },
+      {
+        field: 'actions',
+        headerName: 'Aksi',
+        width: 100,
+        sortable: false,
+        filterable: false,
+        disableColumnMenu: true,
+        align: 'center',
+        headerAlign: 'center',
+        renderCell: (params: GridRenderCellParams) => (
+          <>
+            <Tooltip title="Edit">
+              <IconButton size="small" onClick={() => openEdit(params.row as Sector)}>
+                <EditIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="Hapus">
+              <IconButton size="small" color="error" onClick={() => setDeleteTarget(params.row as Sector)}>
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </>
+        ),
+      },
+    ],
+    [],
+  );
+
   if (isLoading) {
     return (
       <Box>
@@ -123,12 +181,7 @@ export default function SectorManager() {
 
   return (
     <Box>
-      <Stack
-        direction="row"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 3 }}
-      >
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 3 }}>
         <Box>
           <Typography variant="h5" fontWeight={700}>
             Kelola Sektor
@@ -137,63 +190,39 @@ export default function SectorManager() {
             {sectors?.length ?? 0} sektor terdaftar
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={openCreate}
-          size="small"
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={openCreate} size="small">
           Tambah Sektor
         </Button>
       </Stack>
 
-      <TableContainer
-        component={Paper}
-        variant="outlined"
-        sx={{ borderRadius: 2 }}
-      >
-        <Table>
-          <TableHead>
-            <TableRow sx={{ bgcolor: 'grey.50' }}>
-              <TableCell sx={{ fontWeight: 600 }}>Nama</TableCell>
-              <TableCell sx={{ fontWeight: 600 }}>Slug</TableCell>
-              <TableCell sx={{ fontWeight: 600 }} align="right">
-                Aksi
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {sectors?.map((sector) => (
-              <TableRow key={sector.id} hover>
-                <TableCell>
-                  <Typography variant="body2" fontWeight={500}>
-                    {sector.name}
-                  </Typography>
-                </TableCell>
-                <TableCell>
-                  <Chip label={sector.slug} size="small" variant="outlined" sx={{ fontSize: '0.75rem' }} />
-                </TableCell>
-                <TableCell align="right">
-                  <Tooltip title="Edit">
-                    <IconButton size="small" onClick={() => openEdit(sector)}>
-                      <EditIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                  <Tooltip title="Hapus">
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => setDeleteTarget(sector)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataGrid
+        rows={rows}
+        columns={columns}
+        pageSizeOptions={[10, 25]}
+        initialState={{ pagination: { paginationModel: { pageSize: 25 } } }}
+        disableRowSelectionOnClick
+        autoHeight
+        rowHeight={52}
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 2,
+          '& .MuiDataGrid-columnHeaders': { bgcolor: 'grey.50' },
+          '& .MuiDataGrid-columnHeaderTitle': { fontWeight: 600 },
+          '& .MuiDataGrid-cell[data-field="rowNo"], & .MuiDataGrid-columnHeader[data-field="rowNo"]': {
+            position: 'sticky',
+            left: 0,
+            bgcolor: 'background.paper',
+            zIndex: 1,
+          },
+          '& .MuiDataGrid-cell[data-field="actions"], & .MuiDataGrid-columnHeader[data-field="actions"]': {
+            position: 'sticky',
+            right: 0,
+            bgcolor: 'background.paper',
+            zIndex: 1,
+          },
+        }}
+      />
 
       {/* Create/Edit Dialog */}
       <Dialog
@@ -222,18 +251,10 @@ export default function SectorManager() {
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDialogOpen(false)}
-            disabled={isMutating}
-            color="inherit"
-          >
+          <Button onClick={() => setDialogOpen(false)} disabled={isMutating} color="inherit">
             Batal
           </Button>
-          <Button
-            onClick={handleSubmit}
-            variant="contained"
-            disabled={isMutating || !sectorName.trim()}
-          >
+          <Button onClick={handleSubmit} variant="contained" disabled={isMutating || !sectorName.trim()}>
             {isMutating ? 'Menyimpan...' : 'Simpan'}
           </Button>
         </DialogActions>
@@ -247,9 +268,7 @@ export default function SectorManager() {
         fullWidth
         PaperProps={{ sx: { borderRadius: 3 } }}
       >
-        <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>
-          Hapus Sektor?
-        </DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: 'error.main' }}>Hapus Sektor?</DialogTitle>
         <DialogContent>
           <Typography variant="body2">
             Sektor <strong>{deleteTarget?.name}</strong> akan dihapus.
@@ -259,19 +278,10 @@ export default function SectorManager() {
           </Alert>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setDeleteTarget(null)}
-            disabled={deleting}
-            color="inherit"
-          >
+          <Button onClick={() => setDeleteTarget(null)} disabled={deleting} color="inherit">
             Batal
           </Button>
-          <Button
-            onClick={handleDelete}
-            variant="contained"
-            color="error"
-            disabled={deleting}
-          >
+          <Button onClick={handleDelete} variant="contained" color="error" disabled={deleting}>
             {deleting ? 'Menghapus...' : 'Hapus'}
           </Button>
         </DialogActions>

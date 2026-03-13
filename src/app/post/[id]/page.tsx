@@ -2,7 +2,6 @@
 
 import { use } from 'react';
 import { useRouter } from 'next/navigation';
-import Container from '@mui/material/Container';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Stack from '@mui/material/Stack';
@@ -11,16 +10,19 @@ import Skeleton from '@mui/material/Skeleton';
 import Divider from '@mui/material/Divider';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ChatBubbleOutlineIcon from '@mui/icons-material/ChatBubbleOutline';
+import EditIcon from '@mui/icons-material/Edit';
 import { useGetPostQuery } from '@/store/api/postApi';
 import { useGetUserVoteQuery } from '@/store/api/voteApi';
 import { useAuth } from '@/hooks/useAuth';
 import {
   PostDetailHeader,
   PostDetailContent,
-  ShareButton,
+  ShareMenu,
   VoteButton,
 } from '@/components/post';
 import { CommentSection } from '@/components/comment';
+import ThreeColumnLayout from '@/components/layout/ThreeColumnLayout';
+import PostDetailSidebar from '@/components/layout/PostDetailSidebar';
 
 
 // ────────────────────────────────────────────
@@ -79,7 +81,7 @@ interface PostDetailPageProps {
 export default function PostDetailPage({ params }: PostDetailPageProps) {
   const { id } = use(params);
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   const { data: post, isLoading, isError, error } = useGetPostQuery(id);
   const { data: userVoteData } = useGetUserVoteQuery(id, {
@@ -92,8 +94,14 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
       : 'Terjadi kesalahan saat memuat post.';
 
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 3, sm: 4 } }}>
-      <Box sx={{ maxWidth: 800, mx: 'auto' }}>
+    <ThreeColumnLayout
+      rightSidebar={
+        post?.user ? (
+          <PostDetailSidebar author={post.user} postId={id} />
+        ) : undefined
+      }
+    >
+      <Box>
         {/* ── Back link ── */}
         <Button
           startIcon={<ArrowBackIcon />}
@@ -151,7 +159,20 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
               <Box sx={{ flexGrow: 1 }} />
 
               {/* Share */}
-              <ShareButton />
+              <ShareMenu title={post.title} variant="outlined" />
+
+              {/* Edit button (owner only) */}
+              {user && post.user_id === user.id && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  startIcon={<EditIcon sx={{ fontSize: 16 }} />}
+                  onClick={() => router.push(`/post/${post.id}/edit`)}
+                  sx={{ textTransform: 'none', fontSize: '0.8125rem', ml: 0.5 }}
+                >
+                  Edit
+                </Button>
+              )}
             </Stack>
 
             <Divider />
@@ -164,6 +185,6 @@ export default function PostDetailPage({ params }: PostDetailPageProps) {
           </Box>
         )}
       </Box>
-    </Container>
+    </ThreeColumnLayout>
   );
 }
